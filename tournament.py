@@ -79,6 +79,9 @@ def create_bracket(teams: List[str]) -> List[Match]:
 def handle_result(bracket: List[Match], winner: str) -> None:
     for match in bracket:
         if (match.team1 == winner or match.team2 == winner) and match.status == Status.IN_PROGRESS:
+            if match.next_match is None:
+                determine_winner(match)
+                break
             if match.next_match.team1 is None:
                 match.next_match.team1 = winner
                 match.status = Status.FINISHED
@@ -87,6 +90,11 @@ def handle_result(bracket: List[Match], winner: str) -> None:
                 match.next_match.team2 = winner
                 match.status = Status.FINISHED
                 break
+
+def determine_winner(match):
+    match.status = Status.FINISHED
+    # Tournament finish
+    # return winner
 
 def print_bracket(bracket):
     for x in bracket:
@@ -98,6 +106,10 @@ teams1 = ["A", "B", "C", "D", "E"]
 bracket1 = create_bracket(teams1)
 print_bracket(bracket1)
 handle_result(bracket1, bracket1[0].team1)
-print_bracket(bracket1)
+# print_bracket(bracket1)
 handle_result(bracket1, bracket1[1].team2)
+# print_bracket(bracket1)
+handle_result(bracket1, bracket1[2].team2)
+print_bracket(bracket1)
+handle_result(bracket1, bracket1[3].team1)
 print_bracket(bracket1)

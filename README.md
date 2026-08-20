@@ -6,3 +6,4 @@ Backend application for managing tournaments.
 
 - bracket generation
 - match results
+- winner determining
