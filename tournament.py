@@ -1,6 +1,7 @@
 from enum import Enum
 from random import shuffle
 from typing import List, Self
+from exceptions import TournamentError, MatchCreationError, MatchCreationError, TournamentCreationError
 
 
 class Status(Enum):
@@ -12,6 +13,9 @@ class Match:
     match_id = 1
 
     def __init__(self, round_: int, team1: str = None, team2: str = None, next_match: Self = None):
+        if team1 == team2 and team1 is not None:
+            raise MatchCreationError("Teams must be different!")
+
         self.id = Match.match_id
         Match.match_id += 1
         self.team1 = team1
@@ -34,6 +38,9 @@ class Tournament:
     tournament_id = 1
 
     def __init__(self, name: str, teams: List[str]):
+        if len(teams) < 2:
+            raise TournamentCreationError("The number of teams must be at least 2!")
+
         self.id = Tournament.tournament_id
         Tournament.tournament_id += 1
         self.name = name
