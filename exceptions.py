@@ -6,3 +6,6 @@ class MatchCreationError(TournamentError):
 
 class TournamentCreationError(TournamentError):
     pass
+
+class TournamentOperationError(TournamentError):
+    pass

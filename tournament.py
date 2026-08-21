@@ -1,7 +1,7 @@
 from enum import Enum
 from random import shuffle
 from typing import List, Self
-from exceptions import TournamentError, MatchCreationError, MatchCreationError, TournamentCreationError
+from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
 
 
 class Status(Enum):
@@ -99,8 +99,17 @@ class Tournament:
         return bracket
 
     def handle_result(self, winner: str) -> None:
+        if self.status == Status.FINISHED:
+            raise TournamentOperationError("Tournament is already finished!")
+
+        if winner not in self.teams:
+            raise TournamentOperationError(f"Team {winner} is not partisipating in this tournament!")
+
+        match_found = False
         for match in self.bracket:
-            if (match.team1 == winner or match.team2 == winner) and match.status == Status.IN_PROGRESS:
+            if (match.team1 == winner or match.team2 == winner) \
+                and match.team1 is not None and match.team2 is not None and match.status == Status.IN_PROGRESS:
+                match_found = True
                 if match.next_match is None:
                     self.determine_winner(match, winner)
                     break
@@ -112,6 +121,9 @@ class Tournament:
                     match.next_match.team2 = winner
                     match.status = Status.FINISHED
                     break
+
+        if not match_found:
+            raise TournamentOperationError(f"No active match found for team {winner}!")
 
     def determine_winner(self, match: Match, winner: str) -> None:
         match.status = Status.FINISHED
@@ -128,17 +140,18 @@ def print_bracket(bracket):
     print()
 
 
-teams1 = ["A", "B", "C", "D"]
-tournament = Tournament("Test Championship", teams1)
-tournament.create_bracket()
-print(tournament)
-bracket1 = tournament.bracket
-print_bracket(bracket1)
-tournament.handle_result(bracket1[0].team1)
-print_bracket(bracket1)
-tournament.handle_result(bracket1[1].team1)
-print_bracket(bracket1)
-tournament.handle_result(bracket1[2].team1)
-print_bracket(bracket1)
-print(tournament.winner)
-print(tournament)
+
+# teams1 = ["A", "B", "C", "D"]
+# tournament = Tournament("Test Championship", teams1)
+# tournament.create_bracket()
+# print(tournament)
+# bracket1 = tournament.bracket
+# print_bracket(bracket1)
+# tournament.handle_result(bracket1[0].team1)
+# print_bracket(bracket1)
+# tournament.handle_result(bracket1[1].team1)
+# print_bracket(bracket1)
+# tournament.handle_result(bracket1[2].team1)
+# print_bracket(bracket1)
+# print(tournament.winner)
+# print(tournament)

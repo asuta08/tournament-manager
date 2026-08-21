@@ -1,6 +1,6 @@
 import pytest
 
-from exceptions import MatchCreationError, TournamentCreationError
+from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
 from tournament import Match, Status, Tournament
 
 
@@ -51,3 +51,28 @@ class TestTournament:
         with pytest.raises(TournamentCreationError):
             tournament = Tournament("test", teams)
 
+    def test_handle_result_twice(self):
+        tournament = Tournament("test", ["A", "B", "C", "D"])
+        tournament.create_bracket()
+        team = tournament.bracket[0].team1
+        tournament.handle_result(team)
+        with pytest.raises(TournamentOperationError):
+            tournament.handle_result(team)
+
+    def test_handle_result_finished_tournament(self):
+        tournament = Tournament("test", ["A", "B", "C"])
+        tournament.create_bracket()
+        team = tournament.bracket[0].team1
+        tournament.handle_result(team)
+        team = tournament.bracket[1].team1
+        tournament.handle_result(team)
+        assert tournament.status == Status.FINISHED
+        with pytest.raises(TournamentOperationError):
+            tournament.handle_result(team)
+
+    def test_handle_result_outside_team(self):
+        tournament = Tournament("test", ["A", "B", "C"])
+        tournament.create_bracket()
+        team = "Z"
+        with pytest.raises(TournamentOperationError):
+            tournament.handle_result(team)
