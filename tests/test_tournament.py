@@ -24,6 +24,54 @@ class TestMatch:
 
 class TestTournament:
 
+    @pytest.fixture
+    def tournament(self):
+        tournament = Tournament("test", ["A", "B", "C", "D"])
+        tournament.create_bracket()
+        return tournament
+
+    def test_full_tournament_cycle_4_teams(self, tournament):
+        team = tournament.bracket[0].team1
+        tournament.handle_result(team)
+        assert tournament.bracket[0].status == Status.FINISHED
+        assert tournament.bracket[2].team1 == team
+
+        team = tournament.bracket[1].team1
+        tournament.handle_result(team)
+        assert tournament.bracket[1].status == Status.FINISHED
+        assert tournament.bracket[2].team2 == team
+
+        team = tournament.bracket[2].team1
+        tournament.handle_result(team)
+        assert tournament.bracket[2].status == Status.FINISHED
+        assert tournament.status == Status.FINISHED
+        assert tournament.winner == team
+
+    def test_full_tournament_cycle_3_teams(self):
+        tournament = Tournament("test", ["A", "B", "C"])
+        tournament.create_bracket()
+
+        assert tournament.bracket[1].team1 is not None
+
+        team = tournament.bracket[0].team1
+        tournament.handle_result(team)
+        assert tournament.bracket[0].status == Status.FINISHED
+        assert tournament.bracket[1].team2 == team
+
+        team = tournament.bracket[1].team1
+        tournament.handle_result(team)
+        assert tournament.bracket[1].status == Status.FINISHED
+        assert tournament.status == Status.FINISHED
+        assert tournament.winner == team
+
+    def test_next_match_correct(self, tournament):
+        none_count = 0
+        for match in tournament.bracket:
+            assert match.teams_count == 2
+            if match.next_match is None:
+                none_count += 1
+        assert none_count == 1
+
     @pytest.mark.parametrize(
         "teams, match_count",
         [
@@ -51,9 +99,7 @@ class TestTournament:
         with pytest.raises(TournamentCreationError):
             tournament = Tournament("test", teams)
 
-    def test_handle_result_twice(self):
-        tournament = Tournament("test", ["A", "B", "C", "D"])
-        tournament.create_bracket()
+    def test_handle_result_twice(self, tournament):
         team = tournament.bracket[0].team1
         tournament.handle_result(team)
         with pytest.raises(TournamentOperationError):
@@ -70,9 +116,25 @@ class TestTournament:
         with pytest.raises(TournamentOperationError):
             tournament.handle_result(team)
 
-    def test_handle_result_outside_team(self):
-        tournament = Tournament("test", ["A", "B", "C"])
-        tournament.create_bracket()
+    def test_handle_result_outside_team(self, tournament):
         team = "Z"
         with pytest.raises(TournamentOperationError):
             tournament.handle_result(team)
+
+    def test_handle_result_loser(self, tournament):
+        team1 = tournament.bracket[0].team1
+        tournament.handle_result(team1)
+        team2 = tournament.bracket[0].team2
+        with pytest.raises(TournamentOperationError):
+            tournament.handle_result(team2)
+
+    def test_handle_results_out_of_order(self, tournament):
+        team = tournament.bracket[1].team1
+        tournament.handle_result(team)
+
+        team = tournament.bracket[0].team1
+        tournament.handle_result(team)
+
+        final = tournament.bracket[2]
+        assert final.team1 is not None
+        assert final.team2 is not None
