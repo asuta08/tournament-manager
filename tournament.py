@@ -1,6 +1,6 @@
 from enum import Enum
 from random import shuffle
-from typing import List, Self
+from typing import List
 from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
 
 
@@ -12,11 +12,11 @@ class Status(Enum):
 class Match:
     match_id = 1
 
-    def __init__(self, round_: int, team1: str = None, team2: str = None, next_match: Self = None):
+    def __init__(self, round_: int, team1: str = None, team2: str = None, next_match: 'Match' = None):
         if team1 == team2 and team1 is not None:
             raise MatchCreationError("Teams must be different!")
 
-        self.id = Match.match_id
+        self._id = Match.match_id
         Match.match_id += 1
         self.team1 = team1
         self.team2 = team2
@@ -29,9 +29,9 @@ class Match:
         if self.next_match is None:
             next_match_id = None
         else:
-            next_match_id = self.next_match.id
-        return (f'Match(id: {self.id}; Round: {self.round}; Team_1: {self.team1};'
-                f' Team_2: {self.team2}; Status: {self.status}; Next_Match_id: {next_match_id}; Teams_count: {self.teams_count})')
+            next_match_id = self.next_match._id
+        return (f'Match(id: {self._id}; Round: {self.round}; Team_1: {self.team1};'
+                f' Team_2: {self.team2}; Status: {self.status}; Next_Match_id: {next_match_id})')
 
 
 class Tournament:
@@ -41,7 +41,7 @@ class Tournament:
         if len(teams) < 2:
             raise TournamentCreationError("The number of teams must be at least 2!")
 
-        self.id = Tournament.tournament_id
+        self._id = Tournament.tournament_id
         Tournament.tournament_id += 1
         self.name = name
         self.teams = teams
@@ -103,7 +103,7 @@ class Tournament:
             raise TournamentOperationError("Tournament is already finished!")
 
         if winner not in self.teams:
-            raise TournamentOperationError(f"Team {winner} is not partisipating in this tournament!")
+            raise TournamentOperationError(f"Team {winner} is not participating in this tournament!")
 
         match_found = False
         for match in self.bracket:
@@ -131,27 +131,4 @@ class Tournament:
         self.winner = winner
 
     def __repr__(self):
-        return f'Tournament(id: {self.id}; Name: {self.name}; Status: {self.status}; Winner: {self.winner})'
-
-
-def print_bracket(bracket):
-    for x in bracket:
-        print(x)
-    print()
-
-
-
-# teams1 = ["A", "B", "C", "D"]
-# tournament = Tournament("Test Championship", teams1)
-# tournament.create_bracket()
-# print(tournament)
-# bracket1 = tournament.bracket
-# print_bracket(bracket1)
-# tournament.handle_result(bracket1[0].team1)
-# print_bracket(bracket1)
-# tournament.handle_result(bracket1[1].team1)
-# print_bracket(bracket1)
-# tournament.handle_result(bracket1[2].team1)
-# print_bracket(bracket1)
-# print(tournament.winner)
-# print(tournament)
+        return f'Tournament(id: {self._id}; Name: {self.name}; Status: {self.status}; Winner: {self.winner})'

@@ -10,8 +10,8 @@ class TestMatch:
         Match.match_id = 1
         m1 = Match(1, "A", "B")
         m2 = Match(1, "C", "D")
-        assert m1.id == 1
-        assert m2.id == 2
+        assert m1._id == 1
+        assert m2._id == 2
 
     def test_match_status(self):
         match = Match(1, "A", "B")
