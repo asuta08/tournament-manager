@@ -1,5 +1,6 @@
-from database import Base, engine
-from models import Users
+from db.database import Base, engine
+
+from models import UserDB, TournamentDB, MatchDB
 
 class Repository:
 
