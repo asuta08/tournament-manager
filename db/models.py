@@ -26,6 +26,7 @@ class TournamentDB(Base):
     name: Mapped[str]
     creator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     status: Mapped[Status]
+    winner_id: Mapped[int | None]
 
     creator: Mapped["UserDB"] = relationship(
         "UserDB",
