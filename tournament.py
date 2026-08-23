@@ -12,11 +12,11 @@ class Status(Enum):
 class Match:
     match_id = 1
 
-    def __init__(self, round_: int, team1: str = None, team2: str = None, next_match: 'Match' = None):
+    def __init__(self, round_: int, team1: int | str = None, team2: int | str = None, next_match: 'Match' = None):
         if team1 == team2 and team1 is not None:
             raise MatchCreationError("Teams must be different!")
 
-        self._id = Match.match_id
+        self.id = Match.match_id
         Match.match_id += 1
         self.team1 = team1
         self.team2 = team2
@@ -29,15 +29,15 @@ class Match:
         if self.next_match is None:
             next_match_id = None
         else:
-            next_match_id = self.next_match._id
-        return (f'Match(id: {self._id}; Round: {self.round}; Team_1: {self.team1};'
+            next_match_id = self.next_match.id
+        return (f'Match(id: {self.id}; Round: {self.round}; Team_1: {self.team1};'
                 f' Team_2: {self.team2}; Status: {self.status}; Next_Match_id: {next_match_id})')
 
 
 class Tournament:
     tournament_id = 1
 
-    def __init__(self, name: str, teams: List[str]):
+    def __init__(self, name: str, teams: List[int | str]):
         if len(teams) < 2:
             raise TournamentCreationError("The number of teams must be at least 2!")
 
