@@ -10,19 +10,17 @@ class Status(Enum):
 
 
 class Match:
-    match_id = 1
-
-    def __init__(self, round_: int, team1: int | str = None, team2: int | str = None, next_match: 'Match' = None):
-        if team1 == team2 and team1 is not None:
+    def __init__(self, round_: int, team1_id: int  = None, team2_id: int  = None, next_match: 'Match' = None):
+        if team1_id == team2_id and team1_id is not None:
             raise MatchCreationError("Teams must be different!")
 
-        self.id = Match.match_id
-        Match.match_id += 1
-        self.team1 = team1
-        self.team2 = team2
+        self.id = None
+        self.team1_id = team1_id
+        self.team2_id = team2_id
         self.round = round_
         self.status = Status.IN_PROGRESS
         self.next_match = next_match
+        self.winner_id = None
         self.teams_count = 0
 
     def __repr__(self):
@@ -30,14 +28,14 @@ class Match:
             next_match_id = None
         else:
             next_match_id = self.next_match.id
-        return (f'Match(id: {self.id}; Round: {self.round}; Team_1: {self.team1};'
-                f' Team_2: {self.team2}; Status: {self.status}; Next_Match_id: {next_match_id})')
+        return (f'Match(id: {self.id}; Round: {self.round}; Team_1: {self.team1_id};'
+                f' Team_2: {self.team2_id}; Status: {self.status}; Next_match_id: {next_match_id})')
 
 
 class Tournament:
     tournament_id = 1
 
-    def __init__(self, name: str, teams: List[int | str]):
+    def __init__(self, name: str, teams: List[int]):
         if len(teams) < 2:
             raise TournamentCreationError("The number of teams must be at least 2!")
 
@@ -47,7 +45,7 @@ class Tournament:
         self.teams = teams
         self.bracket = None
         self.status = Status.IN_PROGRESS
-        self.winner = None
+        self.winner_id = None
 
     def create_bracket(self) -> List[Match]:
         teams = self.teams.copy()
@@ -78,7 +76,7 @@ class Tournament:
                 else:
                     match = Match(curr_round)
                     if extra_team is not None:
-                        match.team1 = extra_team
+                        match.team1_id = extra_team
                         match.teams_count = 1
                         extra_team = None
                 bracket.append(match)
@@ -98,37 +96,37 @@ class Tournament:
         self.bracket = bracket
         return bracket
 
-    def handle_result(self, winner: str) -> None:
+    def handle_result(self, winner_id: int) -> None:
         if self.status == Status.FINISHED:
             raise TournamentOperationError("Tournament is already finished!")
 
-        if winner not in self.teams:
-            raise TournamentOperationError(f"Team {winner} is not participating in this tournament!")
+        if winner_id not in self.teams:
+            raise TournamentOperationError(f"Team {winner_id} is not participating in this tournament!")
 
         match_found = False
         for match in self.bracket:
-            if (match.team1 == winner or match.team2 == winner) \
-                and match.team1 is not None and match.team2 is not None and match.status == Status.IN_PROGRESS:
+            if (match.team1_id == winner_id or match.team2_id == winner_id) \
+                and match.team1_id is not None and match.team2_id is not None and match.status == Status.IN_PROGRESS:
                 match_found = True
                 if match.next_match is None:
-                    self.determine_winner(match, winner)
+                    self.determine_winner(match, winner_id)
                     break
-                if match.next_match.team1 is None:
-                    match.next_match.team1 = winner
+                if match.next_match.team1_id is None:
+                    match.next_match.team1_id = winner_id
                     match.status = Status.FINISHED
                     break
-                if match.next_match.team2 is None:
-                    match.next_match.team2 = winner
+                if match.next_match.team2_id is None:
+                    match.next_match.team2_id = winner_id
                     match.status = Status.FINISHED
                     break
 
         if not match_found:
-            raise TournamentOperationError(f"No active match found for team {winner}!")
+            raise TournamentOperationError(f"No active match found for team with id: {winner_id}!")
 
-    def determine_winner(self, match: Match, winner: str) -> None:
+    def determine_winner(self, match: Match, winner_id: int) -> None:
         match.status = Status.FINISHED
         self.status = Status.FINISHED
-        self.winner = winner
+        self.winner_id = winner_id
 
     def __repr__(self):
-        return f'Tournament(id: {self._id}; Name: {self.name}; Status: {self.status}; Winner: {self.winner})'
+        return f'Tournament(id: {self._id}; Name: {self.name}; Status: {self.status}; Winner: {self.winner_id})'

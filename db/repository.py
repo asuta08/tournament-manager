@@ -48,8 +48,8 @@ class MatchRepository:
                 new_match = MatchDB(
                     tournament_id=tournament_id,
                     round=match.round,
-                    team1_id=match.team1,
-                    team2_id=match.team2,
+                    team1_id=match.team1_id,
+                    team2_id=match.team2_id,
                     status=Status.IN_PROGRESS
                 )
                 compare[match] = new_match
@@ -58,6 +58,7 @@ class MatchRepository:
             session.flush()
 
             for match, match_db in compare.items():
+                match.id = match_db.id
                 if match.next_match is not None:
                     match_db.next_match_id = compare[match.next_match].id
 
@@ -69,6 +70,13 @@ Repository.create_tables()
 UserRepository.insert_user("Alex Turner")
 user_id = UserRepository.insert_user("Patric Jane")
 tour_id = TournamentRepository.insert_tournament("test", user_id)
+
+
 test_tournament = Tournament("test", [1, 2, 3, 4, 5, 6, 7, 8])
 test_tournament.create_bracket()
 MatchRepository.insert_bracket(tour_id, test_tournament.bracket)
+
+tour2_id = TournamentRepository.insert_tournament("test2", user_id)
+test_tournament2 = Tournament("test2", [1, 2, 3, 4, 5])
+test_tournament2.create_bracket()
+MatchRepository.insert_bracket(tour2_id, test_tournament2.bracket)
