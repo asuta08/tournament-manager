@@ -33,6 +33,7 @@ class TestTournament:
         tournament.handle_result(team)
         assert tournament.bracket[1].status == Status.FINISHED
         assert tournament.bracket[2].team2_id == team
+        assert tournament.current_round == 2
 
         team = tournament.bracket[2].team1_id
         tournament.handle_result(team)
@@ -50,6 +51,7 @@ class TestTournament:
         tournament.handle_result(team)
         assert tournament.bracket[0].status == Status.FINISHED
         assert tournament.bracket[1].team2_id == team
+        assert tournament.current_round == 2
 
         team = tournament.bracket[1].team1_id
         tournament.handle_result(team)

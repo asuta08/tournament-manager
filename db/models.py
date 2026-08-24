@@ -25,6 +25,7 @@ class TournamentDB(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     creator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    current_round: Mapped[int] = mapped_column(default=1)
     status: Mapped[Status]
     winner_id: Mapped[int | None]
 

@@ -1,6 +1,6 @@
 from enum import Enum
 from random import shuffle
-from typing import List
+from typing import List, Tuple
 from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
 
 
@@ -45,6 +45,7 @@ class Tournament:
         self.teams = teams
         self.bracket = None
         self.status = Status.IN_PROGRESS
+        self.current_round = 1
         self.winner_id = None
 
     def create_bracket(self) -> List[Match]:
@@ -96,7 +97,7 @@ class Tournament:
         self.bracket = bracket
         return bracket
 
-    def handle_result(self, winner_id: int) -> None:
+    def handle_result(self, winner_id: int) -> int:
         if self.status == Status.FINISHED:
             raise TournamentOperationError("Tournament is already finished!")
 
@@ -106,27 +107,35 @@ class Tournament:
         match_found = False
         for match in self.bracket:
             if (match.team1_id == winner_id or match.team2_id == winner_id) \
-                and match.team1_id is not None and match.team2_id is not None and match.status == Status.IN_PROGRESS:
+                and match.team1_id is not None and match.team2_id is not None \
+                    and match.status == Status.IN_PROGRESS and match.round == self.current_round:
                 match_found = True
                 if match.next_match is None:
                     self.determine_winner(match, winner_id)
-                    break
+                    return match.id
                 if match.next_match.team1_id is None:
                     match.next_match.team1_id = winner_id
+                    match.winner_id = winner_id
                     match.status = Status.FINISHED
-                    break
+                    if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
+                        self.current_round += 1
+                    return match.id
                 if match.next_match.team2_id is None:
                     match.next_match.team2_id = winner_id
+                    match.winner_id = winner_id
                     match.status = Status.FINISHED
-                    break
+                    if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
+                        self.current_round += 1
+                    return match.id
 
         if not match_found:
             raise TournamentOperationError(f"No active match found for team with id: {winner_id}!")
 
     def determine_winner(self, match: Match, winner_id: int) -> None:
+        match.winner_id = winner_id
         match.status = Status.FINISHED
         self.status = Status.FINISHED
         self.winner_id = winner_id
 
     def __repr__(self):
-        return f'Tournament(id: {self._id}; Name: {self.name}; Status: {self.status}; Winner: {self.winner_id})'
+        return f'Tournament(id: {self._id}; Name: {self.name}; Current_round: {self.current_round}; Status: {self.status}; Winner: {self.winner_id})'
