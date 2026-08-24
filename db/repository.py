@@ -42,6 +42,14 @@ class TournamentRepository:
             tournament.current_round += 1
             session.commit()
 
+    @staticmethod
+    def update_final(tournament_id, winner_id):
+        with session_factory() as session:
+            tournament = session.get(TournamentDB, tournament_id)
+            tournament.winner_id = winner_id
+            tournament.status = Status.FINISHED
+            session.commit()
+
 
 class MatchRepository:
 
@@ -86,6 +94,8 @@ class MatchRepository:
                     next_match.team1_id = winner_id
                 elif next_match.team2_id is None:
                     next_match.team2_id = winner_id
+            else:
+                TournamentRepository.update_final(match.tournament.id, winner_id)
 
             session.commit()
 
