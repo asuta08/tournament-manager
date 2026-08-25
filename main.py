@@ -1,4 +1,4 @@
-from db.repository import Repository, UserRepository
+from db.repository import Repository, UserRepository, TournamentRepository
 from service import Service
 
 
@@ -6,7 +6,9 @@ Repository.create_tables()
 
 user_id = UserRepository.insert_user("Dexter Morgan")
 
-Service.create_tournament(user_id, "test", [1, 2, 3, 4])
+tournament_id = Service.create_tournament(user_id, "test", [1, 2, 3, 4])
+
+
 
 Service.handle_match_result(1, 3, 2)
 Service.handle_match_result(2, 0, 1)
