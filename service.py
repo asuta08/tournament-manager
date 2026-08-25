@@ -34,3 +34,33 @@ class Service:
 
         if all(m.status == Status.FINISHED for m in matches):
             TournamentRepository.update_current_round(match.tournament_id)
+
+    @staticmethod
+    def get_bracket(tournament_id):
+
+        tournament = TournamentRepository.get_tournament_with_matches(tournament_id)
+
+        bracket = {"rounds": []}
+        temp_dict = {"round": 1, "matches": []}
+        for match in sorted(tournament.matches, key= lambda m: m.round):
+            if match.round == temp_dict["round"]:
+                temp_dict["matches"].append({
+                    "match_id": match.id,
+                    "team1_id": match.team1_id,
+                    "team2_id": match.team2_id,
+                    "status": match.status
+                })
+            else:
+                bracket["rounds"].append(temp_dict)
+                temp_dict = {
+                    "round": match.round,
+                    "matches": [{
+                        "match_id": match.id,
+                        "team1_id": match.team1_id,
+                        "team2_id": match.team2_id,
+                        "status": match.status
+                    }]
+                }
+        bracket["rounds"].append(temp_dict)
+
+        return bracket
