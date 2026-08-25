@@ -2,7 +2,7 @@ from typing import List
 
 from db.database import Base, engine, session_factory
 
-from models import UserDB, TournamentDB, MatchDB
+from db.models import UserDB, TournamentDB, MatchDB
 from tournament import Status, Match, Tournament
 
 
@@ -95,37 +95,14 @@ class MatchRepository:
                 elif next_match.team2_id is None:
                     next_match.team2_id = winner_id
             else:
-                TournamentRepository.update_final(match.tournament.id, winner_id)
+                session.commit()
+                return True
 
             session.commit()
 
+        return False
 
-
-Repository.create_tables()
-UserRepository.insert_user("Alex Turner")
-user_id = UserRepository.insert_user("Patric Jane")
-tour_id = TournamentRepository.insert_tournament("test", user_id)
-
-
-# test_tournament = Tournament("test", [1, 2, 3, 4, 5, 6, 7, 8])
-# test_tournament.create_bracket()
-# MatchRepository.insert_bracket(tour_id, test_tournament.bracket)
-
-# tour2_id = TournamentRepository.insert_tournament("test2", user_id)
-# test_tournament2 = Tournament("test2", [1, 2, 3, 4, 5])
-# test_tournament2.create_bracket()
-# MatchRepository.insert_bracket(tour2_id, test_tournament2.bracket)
-
-test_tournament = Tournament("test", [1, 2, 3, 4])
-test_tournament.create_bracket()
-MatchRepository.insert_bracket(tour_id, test_tournament.bracket)
-
-team_id = test_tournament.bracket[0].team1_id
-m_id = test_tournament.handle_result(team_id)
-MatchRepository.update_after_result(m_id, 3, 2, team_id)
-team_id = test_tournament.bracket[1].team1_id
-m_id = test_tournament.handle_result(team_id)
-MatchRepository.update_after_result(m_id, 3, 2, team_id)
-TournamentRepository.update_current_round(1)
-m_id = test_tournament.handle_result(team_id)
-MatchRepository.update_after_result(m_id, 3, 2, team_id)
+    @staticmethod
+    def get_match_by_id(match_id):
+        with session_factory() as session:
+            return session.get(MatchDB, match_id)
