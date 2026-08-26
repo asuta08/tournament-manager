@@ -20,15 +20,15 @@ class Service:
 
         match = MatchRepository.get_match_by_id(match_id)
 
-        if team1_score > team2_score:
-            winner_id = match.team1_id
-        else:
-            winner_id = match.team2_id
+        # if team1_score > team2_score:
+        #     winner_id = match.team1_id
+        # else:
+        #     winner_id = match.team2_id
 
         final = MatchRepository.update_after_result(match_id, team1_score, team2_score, winner_id)
         if final:
             TournamentRepository.update_final(match.tournament_id, winner_id)
-            return winner_id
+            # return winner_id
 
         matches = MatchRepository.get_matches_by_round(match.tournament_id, match.round)
 

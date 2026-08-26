@@ -24,22 +24,25 @@ class TestTournament:
         return tournament
 
     def test_full_tournament_cycle_4_teams(self, tournament):
-        team = tournament.bracket[0].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[0].id
+        team1_id = tournament.bracket[0].team1_id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.bracket[0].status == Status.FINISHED
-        assert tournament.bracket[2].team1_id == team
+        assert tournament.bracket[2].team1_id == team1_id
 
-        team = tournament.bracket[1].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[1].id
+        team1_id = tournament.bracket[1].team1_id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.bracket[1].status == Status.FINISHED
-        assert tournament.bracket[2].team2_id == team
+        assert tournament.bracket[2].team2_id == team1_id
         assert tournament.current_round == 2
 
-        team = tournament.bracket[2].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[2].id
+        team1_id = tournament.bracket[2].team1_id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.bracket[2].status == Status.FINISHED
         assert tournament.status == Status.FINISHED
-        assert tournament.winner_id == team
+        assert tournament.winner_id == team1_id
 
     def test_full_tournament_cycle_3_teams(self):
         tournament = Tournament("test", [1, 2, 3])
@@ -47,17 +50,19 @@ class TestTournament:
 
         assert tournament.bracket[1].team1_id is not None
 
-        team = tournament.bracket[0].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[0].id
+        team1_id = tournament.bracket[0].team1_id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.bracket[0].status == Status.FINISHED
-        assert tournament.bracket[1].team2_id == team
+        assert tournament.bracket[1].team2_id == team1_id
         assert tournament.current_round == 2
 
-        team = tournament.bracket[1].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[1].id
+        team1_id = tournament.bracket[1].team1_id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.bracket[1].status == Status.FINISHED
         assert tournament.status == Status.FINISHED
-        assert tournament.winner_id == team
+        assert tournament.winner_id == team1_id
 
     def test_next_match_correct(self, tournament):
         none_count = 0
@@ -95,40 +100,34 @@ class TestTournament:
             tournament = Tournament("test", teams)
 
     def test_handle_result_twice(self, tournament):
-        team = tournament.bracket[0].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[0].id
+        tournament.handle_result(match_id, 1, 0)
+        assert tournament.bracket[0].status == Status.FINISHED
         with pytest.raises(TournamentOperationError):
-            tournament.handle_result(team)
+            tournament.handle_result(match_id, 1, 0)
 
     def test_handle_result_finished_tournament(self):
         tournament = Tournament("test", [1, 2, 3])
         tournament.create_bracket()
-        team = tournament.bracket[0].team1_id
-        tournament.handle_result(team)
-        team = tournament.bracket[1].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[0].id
+        tournament.handle_result(match_id, 1, 0)
+        match_id = tournament.bracket[1].id
+        tournament.handle_result(match_id, 1, 0)
         assert tournament.status == Status.FINISHED
         with pytest.raises(TournamentOperationError):
-            tournament.handle_result(team)
+            tournament.handle_result(match_id, 1, 0)
 
-    def test_handle_result_outside_team(self, tournament):
-        team = 42
+    def test_handle_result_nonexistent_match(self, tournament):
+        match_id = 42
         with pytest.raises(TournamentOperationError):
-            tournament.handle_result(team)
-
-    def test_handle_result_loser(self, tournament):
-        team1 = tournament.bracket[0].team1_id
-        tournament.handle_result(team1)
-        team2 = tournament.bracket[0].team2_id
-        with pytest.raises(TournamentOperationError):
-            tournament.handle_result(team2)
+            tournament.handle_result(match_id, 1, 0)
 
     def test_handle_results_out_of_order(self, tournament):
-        team = tournament.bracket[1].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[1].id
+        tournament.handle_result(match_id, 1, 0)
 
-        team = tournament.bracket[0].team1_id
-        tournament.handle_result(team)
+        match_id = tournament.bracket[0].id
+        tournament.handle_result(match_id, 1, 0)
 
         final = tournament.bracket[2]
         assert final.team1_id is not None

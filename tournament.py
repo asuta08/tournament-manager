@@ -97,45 +97,43 @@ class Tournament:
         self.bracket = bracket
         return bracket
 
-    def handle_result(self, winner_id: int) -> int:
+    def find_active_match(self, match_id: int) -> Match:
+        for match in self.bracket:
+            if match.id == match_id and match.status == Status.IN_PROGRESS and match.round == self.current_round \
+                and match.team1_id is not None and match.team2_id is not None:
+                return match
+
+    def is_round_finished(self):
+        if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
+            return True
+        return False
+
+    def handle_result(self, match_id, team1_score, team2_score) -> None:
         if self.status == Status.FINISHED:
             raise TournamentOperationError("Tournament is already finished!")
 
-        if winner_id not in self.teams:
-            raise TournamentOperationError(f"Team {winner_id} is not participating in this tournament!")
+        match = self.find_active_match(match_id)
 
-        match_found = False
-        for match in self.bracket:
-            if (match.team1_id == winner_id or match.team2_id == winner_id) \
-                and match.team1_id is not None and match.team2_id is not None \
-                    and match.status == Status.IN_PROGRESS and match.round == self.current_round:
-                match_found = True
-                if match.next_match is None:
-                    self.determine_winner(match, winner_id)
-                    return match.id
-                if match.next_match.team1_id is None:
-                    match.next_match.team1_id = winner_id
-                    match.winner_id = winner_id
-                    match.status = Status.FINISHED
-                    if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
-                        self.current_round += 1
-                    return match.id
-                if match.next_match.team2_id is None:
-                    match.next_match.team2_id = winner_id
-                    match.winner_id = winner_id
-                    match.status = Status.FINISHED
-                    if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
-                        self.current_round += 1
-                    return match.id
+        if match is None:
+            raise TournamentOperationError(f"No active match found with id: {match_id}!")
 
-        if not match_found:
-            raise TournamentOperationError(f"No active match found for team with id: {winner_id}!")
+        winner_id = match.team1_id if team1_score > team2_score else match.team2_id
 
-    def determine_winner(self, match: Match, winner_id: int) -> None:
         match.winner_id = winner_id
         match.status = Status.FINISHED
-        self.status = Status.FINISHED
-        self.winner_id = winner_id
+
+        if match.next_match is not None:
+            if match.next_match.team1_id is None:
+                match.next_match.team1_id = winner_id
+            elif match.next_match.team2_id is None:
+                match.next_match.team2_id = winner_id
+
+        if self.is_round_finished():
+            self.current_round += 1
+
+        if match.next_match is None:
+            self.status = Status.FINISHED
+            self.winner_id = winner_id
 
     def __repr__(self):
         return f'Tournament(id: {self._id}; Name: {self.name}; Current_round: {self.current_round}; Status: {self.status}; Winner: {self.winner_id})'
