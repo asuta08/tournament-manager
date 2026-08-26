@@ -18,22 +18,13 @@ class Service:
     @staticmethod
     def handle_match_result(match_id, team1_score, team2_score):
 
-        match = MatchRepository.get_match_by_id(match_id)
+        match_db = MatchRepository.get_match_by_id(match_id)
+        tournament = TournamentRepository.load_tournament(match_db.tournament_id)
 
-        # if team1_score > team2_score:
-        #     winner_id = match.team1_id
-        # else:
-        #     winner_id = match.team2_id
+        tournament.handle_result(match_id, team1_score, team2_score)
+        print(tournament.bracket)
 
-        final = MatchRepository.update_after_result(match_id, team1_score, team2_score, winner_id)
-        if final:
-            TournamentRepository.update_final(match.tournament_id, winner_id)
-            # return winner_id
-
-        matches = MatchRepository.get_matches_by_round(match.tournament_id, match.round)
-
-        if all(m.status == Status.FINISHED for m in matches):
-            TournamentRepository.update_current_round(match.tournament_id)
+        TournamentRepository.save_tournament(tournament)
 
     @staticmethod
     def get_bracket(tournament_id):

@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from db.database import Base, engine, session_factory
 
 from db.models import UserDB, TournamentDB, MatchDB
-from tournament import Status, Match
+from tournament import Status, Match, Tournament
 
 
 class Repository:
@@ -29,6 +29,39 @@ class UserRepository:
 
 
 class TournamentRepository:
+
+    @staticmethod
+    def load_tournament(tournament_id):
+        with session_factory() as session:
+            tournament_db = session.get(TournamentDB, tournament_id)
+
+            match_map = {}
+            teams = set()
+
+            for match_db in tournament_db.matches:
+                teams.add(match_db.team1_id)
+                teams.add(match_db.team2_id)
+                match = Match(match_db.round, match_db.team1_id, match_db.team2_id)
+                match.id = match_db.id
+                match.team1_score = match_db.team1_score
+                match.team2_score = match_db.team2_score
+                match.winner_id = match_db.winner_id
+                match.status = match_db.status
+                match_map[match_db.id] = match
+
+            for match_db in tournament_db.matches:
+                match = match_map[match_db.id]
+                if match_db.next_match_id is not None:
+                    match.next_match = match_map[match_db.next_match_id]
+
+            tournament = Tournament(tournament_id=tournament_db.id, teams=list(teams))
+            tournament.bracket = list(match_map.values())
+            tournament.current_round = tournament_db.current_round
+            tournament.status = tournament_db.status
+
+            return tournament
+
+
 
     @staticmethod
     def insert_tournament(name, creator_id):
@@ -64,6 +97,25 @@ class TournamentRepository:
             result = session.scalars(stmt).first()
             return result
 
+    @staticmethod
+    def save_tournament(tournament):
+        with session_factory() as session:
+            tournament_db = session.get(TournamentDB, tournament.id)
+
+            tournament_db.current_round = tournament.current_round
+            tournament_db.status = tournament.status
+            tournament_db.winner_id = tournament.winner_id
+
+            for match in tournament.bracket:
+                match_db = session.get(MatchDB, match.id)
+                match_db.team1_id = match.team1_id
+                match_db.team2_id = match.team2_id
+                match_db.team1_score = match.team1_score
+                match_db.team2_score = match.team2_score
+                match_db.status = match.status
+                match_db.winner_id = match.winner_id
+
+            session.commit()
 
 class MatchRepository:
 

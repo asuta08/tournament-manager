@@ -1,6 +1,6 @@
 from enum import Enum
 from random import shuffle
-from typing import List, Tuple
+from typing import List
 from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
 
 
@@ -21,6 +21,8 @@ class Match:
         self.status = Status.IN_PROGRESS
         self.next_match = next_match
         self.winner_id = None
+        self.team1_score = None
+        self.team2_score = None
         self.teams_count = 0
 
     def __repr__(self):
@@ -35,13 +37,13 @@ class Match:
 class Tournament:
     tournament_id = 1
 
-    def __init__(self, name: str, teams: List[int]):
+    def __init__(self, tournament_id, teams: List[int]):
         if len(teams) < 2:
             raise TournamentCreationError("The number of teams must be at least 2!")
 
-        self._id = Tournament.tournament_id
-        Tournament.tournament_id += 1
-        self.name = name
+        self.id = tournament_id
+        # self._id = Tournament.tournament_id
+        # Tournament.tournament_id += 1
         self.teams = teams
         self.bracket = None
         self.status = Status.IN_PROGRESS
@@ -99,8 +101,12 @@ class Tournament:
 
     def find_active_match(self, match_id: int) -> Match:
         for match in self.bracket:
+            if match.id == match_id: print('1 correct')
+            if match.status == Status.IN_PROGRESS: print('2 correct')
+            if match.round == self.current_round: print('3 correct')
             if match.id == match_id and match.status == Status.IN_PROGRESS and match.round == self.current_round \
                 and match.team1_id is not None and match.team2_id is not None:
+                print('full correct')
                 return match
 
     def is_round_finished(self):
@@ -120,6 +126,8 @@ class Tournament:
         winner_id = match.team1_id if team1_score > team2_score else match.team2_id
 
         match.winner_id = winner_id
+        match.team1_score = team1_score
+        match.team2_score = team2_score
         match.status = Status.FINISHED
 
         if match.next_match is not None:
@@ -136,4 +144,4 @@ class Tournament:
             self.winner_id = winner_id
 
     def __repr__(self):
-        return f'Tournament(id: {self._id}; Name: {self.name}; Current_round: {self.current_round}; Status: {self.status}; Winner: {self.winner_id})'
+        return f'Tournament(Current_round: {self.current_round}; Status: {self.status}; Winner: {self.winner_id})'
