@@ -20,7 +20,7 @@ class Repository:
 class UserRepository:
 
     @staticmethod
-    def insert_user(username):
+    def insert_user(username: str) -> int:
         with session_factory() as session:
             new_user = UserDB(username=username)
             session.add(new_user)
@@ -31,7 +31,7 @@ class UserRepository:
 class TournamentRepository:
 
     @staticmethod
-    def load_tournament(tournament_id):
+    def load_tournament(tournament_id: int) -> Tournament:
         with session_factory() as session:
             tournament_db = session.get(TournamentDB, tournament_id)
 
@@ -54,17 +54,16 @@ class TournamentRepository:
                 if match_db.next_match_id is not None:
                     match.next_match = match_map[match_db.next_match_id]
 
-            tournament = Tournament(tournament_id=tournament_db.id, teams=list(teams))
+            tournament = Tournament(name=tournament_db.name, teams=list(teams))
+            tournament.id = tournament_db.id
             tournament.bracket = list(match_map.values())
             tournament.current_round = tournament_db.current_round
             tournament.status = tournament_db.status
 
             return tournament
 
-
-
     @staticmethod
-    def insert_tournament(name, creator_id):
+    def insert_tournament(name: str, creator_id: int) -> int:
         with session_factory() as session:
             new_tournament = TournamentDB(name=name, creator_id=creator_id, status=Status.IN_PROGRESS)
             session.add(new_tournament)
@@ -72,22 +71,7 @@ class TournamentRepository:
             return new_tournament.id
 
     @staticmethod
-    def update_current_round(tournament_id):
-        with session_factory() as session:
-            tournament = session.get(TournamentDB, tournament_id)
-            tournament.current_round += 1
-            session.commit()
-
-    @staticmethod
-    def update_final(tournament_id, winner_id):
-        with session_factory() as session:
-            tournament = session.get(TournamentDB, tournament_id)
-            tournament.winner_id = winner_id
-            tournament.status = Status.FINISHED
-            session.commit()
-
-    @staticmethod
-    def get_tournament_with_matches(tournament_id):
+    def get_tournament_with_matches(tournament_id: int) -> TournamentDB:
         with session_factory() as session:
             stmt = (
                 select(TournamentDB)
@@ -98,10 +82,11 @@ class TournamentRepository:
             return result
 
     @staticmethod
-    def save_tournament(tournament):
+    def save_tournament(tournament: Tournament) -> None:
         with session_factory() as session:
             tournament_db = session.get(TournamentDB, tournament.id)
 
+            tournament_db.name = tournament.name
             tournament_db.current_round = tournament.current_round
             tournament_db.status = tournament.status
             tournament_db.winner_id = tournament.winner_id
@@ -120,7 +105,7 @@ class TournamentRepository:
 class MatchRepository:
 
     @staticmethod
-    def insert_bracket(tournament_id, bracket: List[Match]):
+    def insert_bracket(tournament_id: int, bracket: List[Match]) -> None:
         with session_factory() as session:
 
             compare = {}
@@ -146,35 +131,12 @@ class MatchRepository:
             session.commit()
 
     @staticmethod
-    def update_after_result(match_id, team1_score, team2_score, winner_id):
-        with session_factory() as session:
-            match = session.get(MatchDB, match_id)
-            match.team1_score = team1_score
-            match.team2_score = team2_score
-            match.winner_id = winner_id
-            match.status = Status.FINISHED
-
-            if match.next_match_id is not None:
-                next_match = session.get(MatchDB, match.next_match_id)
-                if next_match.team1_id is None:
-                    next_match.team1_id = winner_id
-                elif next_match.team2_id is None:
-                    next_match.team2_id = winner_id
-            else:
-                session.commit()
-                return True
-
-            session.commit()
-
-        return False
-
-    @staticmethod
-    def get_match_by_id(match_id):
+    def get_match_by_id(match_id: int) -> MatchDB:
         with session_factory() as session:
             return session.get(MatchDB, match_id)
 
     @staticmethod
-    def get_matches_by_round(tournament_id, round_):
+    def get_matches_by_round(tournament_id: int, round_: int) -> List[MatchDB]:
         with session_factory() as session:
             stmt = (
                 select(MatchDB)

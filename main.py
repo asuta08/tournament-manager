@@ -8,7 +8,7 @@ user_id = UserRepository.insert_user("Dexter Morgan")
 
 tournament_id = Service.create_tournament(user_id, "test", [1, 2, 3, 4])
 
-
+print(Service.get_bracket(1))
 
 Service.handle_match_result(1, 3, 2)
 Service.handle_match_result(2, 0, 1)
