@@ -1,10 +1,19 @@
 from typing import List, Dict, Any
 
-from db.repository import TournamentRepository, MatchRepository
+from db.repository import TournamentRepository, MatchRepository, UserRepository
 from tournament import Tournament
 
 
 class Service:
+    @staticmethod
+    def create_user(username: str) -> int:
+        user_id = UserRepository.insert_user(username)
+        return user_id
+
+    @staticmethod
+    def get_user(user_id: int):
+        user = UserRepository.get_user(user_id)
+        return {"user_id": user_id, "username": user.username}
 
     @staticmethod
     def create_tournament(user_id: int, name: str, teams: List[int]) -> int:

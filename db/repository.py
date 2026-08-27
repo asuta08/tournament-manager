@@ -27,6 +27,12 @@ class UserRepository:
             session.commit()
             return new_user.id
 
+    @staticmethod
+    def get_user(user_id: int):
+        with session_factory() as session:
+            user = session.get(UserDB, user_id)
+            return user
+
 
 class TournamentRepository:
 
