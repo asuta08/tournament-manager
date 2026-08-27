@@ -21,7 +21,15 @@ class TestTournament:
     def tournament(self):
         tournament = Tournament("test", [1, 2, 3, 4])
         tournament.create_bracket()
+        for i, match in enumerate(tournament.bracket):
+            match.id = i + 1
         return tournament
+
+    def test_ids(self, tournament):
+        assert tournament.bracket[0].id == 1
+        assert tournament.bracket[1].id == 2
+        assert tournament.bracket[2].id == 3
+
 
     def test_full_tournament_cycle_4_teams(self, tournament):
         match_id = tournament.bracket[0].id
@@ -47,6 +55,8 @@ class TestTournament:
     def test_full_tournament_cycle_3_teams(self):
         tournament = Tournament("test", [1, 2, 3])
         tournament.create_bracket()
+        for i, match in enumerate(tournament.bracket):
+            match.id = i + 1
 
         assert tournament.bracket[1].team1_id is not None
 
@@ -109,6 +119,8 @@ class TestTournament:
     def test_handle_result_finished_tournament(self):
         tournament = Tournament("test", [1, 2, 3])
         tournament.create_bracket()
+        for i, match in enumerate(tournament.bracket):
+            match.id = i + 1
         match_id = tournament.bracket[0].id
         tournament.handle_result(match_id, 1, 0)
         match_id = tournament.bracket[1].id
