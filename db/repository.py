@@ -28,7 +28,7 @@ class UserRepository:
             return new_user.id
 
     @staticmethod
-    def get_user(user_id: int):
+    def get_user(user_id: int) -> UserDB:
         with session_factory() as session:
             user = session.get(UserDB, user_id)
             return user
@@ -65,6 +65,7 @@ class TournamentRepository:
             tournament.bracket = list(match_map.values())
             tournament.current_round = tournament_db.current_round
             tournament.status = tournament_db.status
+            tournament.winner_id = tournament_db.winner_id
 
             return tournament
 
