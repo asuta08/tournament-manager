@@ -1,14 +1,24 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+
 
 class UserSchema(BaseModel):
-    username: str
+    username: str = Field(min_length=3, max_length=50)
+
 
 class TournamentSchema(BaseModel):
-    user_id: int
-    name: str
-    teams: List[int]
+    user_id: int = Field(gt=0)
+    name: str = Field(min_length=1, max_length=100)
+    teams: List[int] = Field(min_length=2, max_length=64)
+
+    @field_validator('teams')
+    @classmethod
+    def unique_teams(cls, v: List[int]) -> List[int]:
+        if len(v) != len(set(v)):
+            raise ValueError("Teams must be unique!")
+        return v
+
 
 class MatchResultSchema(BaseModel):
-    team1_score: int
-    team2_score: int
+    team1_score: int = Field(ge=0)
+    team2_score: int = Field(ge=0)
