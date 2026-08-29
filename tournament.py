@@ -91,7 +91,7 @@ class Tournament:
         self.bracket = bracket
         return bracket
 
-    def _find_active_match(self, match_id: int) -> Match | None:
+    def _find_active_match(self, match_id: int) -> Match:
         for match in self.bracket:
             if match.id == match_id:
                 if match.status != Status.IN_PROGRESS:
@@ -99,7 +99,6 @@ class Tournament:
                 if match.round != self.current_round:
                     raise TournamentOperationError("Match is not in the current round!", 400)
                 return match
-        raise TournamentOperationError(f"Match with id: {match_id} not found!", 404)
 
     def _is_round_finished(self) -> bool:
         if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
@@ -111,9 +110,6 @@ class Tournament:
             raise TournamentOperationError("Tournament is already finished!", 400)
 
         match = self._find_active_match(match_id)
-
-        if match is None:
-            raise TournamentOperationError(f"Match with id: {match_id} is not active!", 400)
 
         winner_id = match.team1_id if team1_score > team2_score else match.team2_id
 

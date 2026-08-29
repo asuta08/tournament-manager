@@ -3,18 +3,10 @@ from typing import List
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
-from db.database import Base, engine, session_factory
+from db.database import session_factory
 
 from db.models import UserDB, TournamentDB, MatchDB
 from tournament import Status, Match, Tournament
-
-
-class Repository:
-
-    @staticmethod
-    def create_tables():
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
 
 
 class UserRepository:

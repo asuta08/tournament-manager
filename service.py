@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
 
 from db.repository import TournamentRepository, MatchRepository, UserRepository
+from exceptions import TournamentRepositoryError
 from tournament import Tournament
 
 
@@ -13,6 +14,10 @@ class Service:
     @staticmethod
     def get_user(user_id: int) -> Dict[str, Any]:
         user = UserRepository.get_user(user_id)
+
+        if user is None:
+            raise TournamentRepositoryError("User not found!", 404)
+
         return {"user_id": user_id, "username": user.username}
 
     @staticmethod
@@ -29,6 +34,10 @@ class Service:
     @staticmethod
     def get_tournament(tournament_id: int) -> Dict[str, Any]:
         tournament = TournamentRepository.load_tournament(tournament_id)
+
+        if tournament is None:
+            raise TournamentRepositoryError("Tournament not found!", 404)
+
         return {
             "tournament_id": tournament.id,
             "name": tournament.name,
@@ -40,6 +49,10 @@ class Service:
     @staticmethod
     def handle_match_result(match_id: int, team1_score: int, team2_score: int) -> None:
         match_db = MatchRepository.get_match_by_id(match_id)
+
+        if match_db is None:
+            raise TournamentRepositoryError("Match not found!", 404)
+
         tournament = TournamentRepository.load_tournament(match_db.tournament_id)
 
         tournament.handle_result(match_id, team1_score, team2_score)
@@ -49,6 +62,9 @@ class Service:
     @staticmethod
     def get_bracket(tournament_id: int) -> Dict[str, List[Dict[str, Any]]]:
         tournament = TournamentRepository.load_tournament(tournament_id)
+
+        if tournament is None:
+            raise TournamentRepositoryError("Tournament not found!", 404)
 
         bracket = {"rounds": []}
         temp_dict = {"round": 1, "matches": []}
@@ -78,6 +94,10 @@ class Service:
     @staticmethod
     def get_match(match_id: int) -> Dict[str, Any]:
         match_db = MatchRepository.get_match_by_id(match_id)
+
+        if match_db is None:
+            raise TournamentRepositoryError("Match not found!", 404)
+
         return {
             "match_id": match_id,
             "team1_id": match_db.team1_id,

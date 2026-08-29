@@ -8,7 +8,7 @@ app = FastAPI()
 app.include_router(router)
 
 @app.exception_handler(TournamentError)
-def tournament_error_handler(request: Request, exc):
+def tournament_error_handler(request: Request, exc: TournamentError):
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.message}

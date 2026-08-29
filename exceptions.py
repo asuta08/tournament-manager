@@ -5,3 +5,6 @@ class TournamentError(Exception):
 
 class TournamentOperationError(TournamentError):
     pass
+
+class TournamentRepositoryError(TournamentError):
+    pass
