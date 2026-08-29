@@ -1,44 +1,44 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 from schemas import UserSchema, TournamentSchema, MatchResultSchema
 from service import Service
 
-app = FastAPI()
+router = APIRouter()
 
 
-@app.post("/users", status_code=201, tags=["Users"], summary="Create a new user")
+@router.post("/users", status_code=201, tags=["Users"], summary="Create a new user")
 def create_user(user: UserSchema):
     user_id = Service.create_user(user.username)
     return {"user_id": user_id}
 
-@app.get("/users/{user_id}", tags=["Users"], summary="Get user by id")
+@router.get("/users/{user_id}", tags=["Users"], summary="Get user by id")
 def get_user(user_id: int):
     return Service.get_user(user_id)
 
 
-@app.post("/tournaments", status_code=201, tags=["Tournaments"], summary="Create a new tournament")
+@router.post("/tournaments", status_code=201, tags=["Tournaments"], summary="Create a new tournament")
 def create_tournament(tournament: TournamentSchema):
     tournament_id = Service.create_tournament(tournament.user_id, tournament.name, tournament.teams)
     return {"tournament_id": tournament_id}
 
-@app.get("/tournaments/{tournament_id}", tags=["Tournaments"], summary="Get tournament by id")
+@router.get("/tournaments/{tournament_id}", tags=["Tournaments"], summary="Get tournament by id")
 def get_tournament(tournament_id: int):
     return Service.get_tournament(tournament_id)
 
-@app.get("/tournaments/{tournament_id}/bracket", tags=["Tournaments"], summary="Get tournament bracket by id")
+@router.get("/tournaments/{tournament_id}/bracket", tags=["Tournaments"], summary="Get tournament bracket by id")
 def get_tournament_bracket(tournament_id: int):
     return Service.get_bracket(tournament_id)
 
-@app.get("/tournaments/{tournament_id}/winner", tags=["Tournaments"], summary="Get tournament winner")
+@router.get("/tournaments/{tournament_id}/winner", tags=["Tournaments"], summary="Get tournament winner")
 def get_winner(tournament_id: int):
     winner_id = Service.get_tournament(tournament_id)["winner_id"]
     return {"winner_id": winner_id}
 
 
-@app.get("/matches/{match_id}", tags=["Matches"], summary="Get match by id")
+@router.get("/matches/{match_id}", tags=["Matches"], summary="Get match by id")
 def get_match(match_id: int):
     return Service.get_match(match_id)
 
-@app.post("/matches/{match_id}/result", status_code=201, tags=["Matches"], summary="Add a match result")
+@router.post("/matches/{match_id}/result", status_code=201, tags=["Matches"], summary="Add a match result")
 def apply_result(match_id: int, result: MatchResultSchema):
     Service.handle_match_result(match_id, result.team1_score, result.team2_score)
     return {"success": True}
