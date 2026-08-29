@@ -1,7 +1,7 @@
 from enum import Enum
 from random import shuffle
 from typing import List
-from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
+from exceptions import TournamentOperationError
 
 
 class Status(Enum):
@@ -11,9 +11,6 @@ class Status(Enum):
 
 class Match:
     def __init__(self, round_: int, team1_id: int = None, team2_id: int = None, next_match: 'Match' = None):
-        if team1_id == team2_id and team1_id is not None:
-            raise MatchCreationError("Teams must be different!")
-
         self.id = None
         self.team1_id = team1_id
         self.team2_id = team2_id
@@ -37,9 +34,6 @@ class Match:
 class Tournament:
 
     def __init__(self, name: str, teams: List[int]):
-        if len(teams) < 2:
-            raise TournamentCreationError("The number of teams must be at least 2!")
-
         self.id = None
         self.name = name
         self.teams = teams
@@ -97,26 +91,29 @@ class Tournament:
         self.bracket = bracket
         return bracket
 
-    def find_active_match(self, match_id: int) -> Match | None:
+    def _find_active_match(self, match_id: int) -> Match | None:
         for match in self.bracket:
-            if match.id == match_id and match.status == Status.IN_PROGRESS and match.round == self.current_round \
-                and match.team1_id is not None and match.team2_id is not None:
+            if match.id == match_id:
+                if match.status != Status.IN_PROGRESS:
+                    raise TournamentOperationError("Match is already finished!", 400)
+                if match.round != self.current_round:
+                    raise TournamentOperationError("Match is not in the current round!", 400)
                 return match
-        return None
+        raise TournamentOperationError(f"Match with id: {match_id} not found!", 404)
 
-    def is_round_finished(self) -> bool:
+    def _is_round_finished(self) -> bool:
         if all(m.status == Status.FINISHED for m in self.bracket if m.round == self.current_round):
             return True
         return False
 
     def handle_result(self, match_id: int, team1_score: int, team2_score: int) -> None:
         if self.status == Status.FINISHED:
-            raise TournamentOperationError("Tournament is already finished!")
+            raise TournamentOperationError("Tournament is already finished!", 400)
 
-        match = self.find_active_match(match_id)
+        match = self._find_active_match(match_id)
 
         if match is None:
-            raise TournamentOperationError(f"No active match found with id: {match_id}!")
+            raise TournamentOperationError(f"Match with id: {match_id} is not active!", 400)
 
         winner_id = match.team1_id if team1_score > team2_score else match.team2_id
 
@@ -131,7 +128,7 @@ class Tournament:
             elif match.next_match.team2_id is None:
                 match.next_match.team2_id = winner_id
 
-        if self.is_round_finished():
+        if self._is_round_finished():
             self.current_round += 1
 
         if match.next_match is None:

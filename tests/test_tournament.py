@@ -1,18 +1,12 @@
 import pytest
 
-from exceptions import MatchCreationError, TournamentCreationError, TournamentOperationError
+from exceptions import TournamentOperationError
 from tournament import Match, Status, Tournament
 
 
-class TestMatch:
-
-    def test_match_status(self):
+def test_match_status():
         match = Match(1, 1, 2)
         assert match.status == Status.IN_PROGRESS
-
-    def test_match_identical_teams(self):
-        with pytest.raises(MatchCreationError):
-            match = Match(1, 1, 1)
 
 
 class TestTournament:
@@ -97,17 +91,6 @@ class TestTournament:
         tournament = Tournament("test", teams)
         tournament.create_bracket()
         assert len(tournament.bracket) == match_count
-
-    @pytest.mark.parametrize(
-        "teams",
-        [
-            [],
-            [1],
-        ]
-    )
-    def test_not_enough_teams(self, teams):
-        with pytest.raises(TournamentCreationError):
-            tournament = Tournament("test", teams)
 
     def test_handle_result_twice(self, tournament):
         match_id = tournament.bracket[0].id
