@@ -1,6 +1,8 @@
 from fastapi import APIRouter
+
+from exceptions import AuthError
 from schemas import UserSchema, TournamentSchema, MatchResultSchema
-from security import hash_password
+from security import hash_password, verify_password, create_token
 from service import Service
 
 router = APIRouter()
@@ -12,15 +14,23 @@ def register_user(user: UserSchema):
     user_id = Service.create_user(user.username, hashed_password)
     return {"user_id": user_id}
 
+@router.post("/auth/login")
+def login_user(user: UserSchema):
+    data = Service.get_user_by_username(user.username)
+
+    if not verify_password(user.password, data["hashed_password"]):
+        raise AuthError("Invalid password!", 401)
+
+    return {"access_token": create_token(data["user_id"])}
 
 # @router.post("/users", status_code=201, tags=["Users"], summary="Create a new user")
 # def create_user(user: UserSchema):
 #     user_id = Service.create_user(user.username)
 #     return {"user_id": user_id}
 
-@router.get("/users/{user_id}", tags=["Users"], summary="Get user by id")
-def get_user(user_id: int):
-    return Service.get_user(user_id)
+# @router.get("/users/{user_id}", tags=["Users"], summary="Get user by id")
+# def get_user(user_id: int):
+#     return Service.get_user(user_id)
 
 
 @router.post("/tournaments", status_code=201, tags=["Tournaments"], summary="Create a new tournament")

@@ -20,10 +20,20 @@ class UserRepository:
             return new_user.id
 
     @staticmethod
-    def get_user(user_id: int) -> UserDB:
+    def get_user_by_id(user_id: int) -> UserDB:
         with session_factory() as session:
             user = session.get(UserDB, user_id)
             return user
+
+    @staticmethod
+    def get_user_by_username(username: str) -> UserDB:
+        with session_factory() as session:
+            stmt = (
+                select(UserDB).
+                where(UserDB.username == username)
+            )
+            result = session.scalars(stmt).first()
+            return result
 
 
 class TournamentRepository:
