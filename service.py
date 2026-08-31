@@ -7,8 +7,8 @@ from tournament import Tournament
 
 class Service:
     @staticmethod
-    def create_user(username: str) -> int:
-        user_id = UserRepository.insert_user(username)
+    def create_user(username: str, hashed_password: str) -> int:
+        user_id = UserRepository.insert_user(username, hashed_password)
         return user_id
 
     @staticmethod

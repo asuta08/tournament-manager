@@ -45,9 +45,6 @@ class Tournament:
     def create_bracket(self) -> List[Match]:
         teams = self.teams.copy()
 
-        if len(teams) < 2:
-            return []
-
         shuffle(teams)
         teams_count = len(teams)
         bracket = []

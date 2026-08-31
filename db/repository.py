@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
-from db.database import session_factory
+from db.database import session_factory, Base, engine
 
 from db.models import UserDB, TournamentDB, MatchDB
 from tournament import Status, Match, Tournament
@@ -12,9 +12,9 @@ from tournament import Status, Match, Tournament
 class UserRepository:
 
     @staticmethod
-    def insert_user(username: str) -> int:
+    def insert_user(username: str, hashed_password: str) -> int:
         with session_factory() as session:
-            new_user = UserDB(username=username)
+            new_user = UserDB(username=username, hashed_password=hashed_password)
             session.add(new_user)
             session.commit()
             return new_user.id

@@ -1,14 +1,22 @@
 from fastapi import APIRouter
 from schemas import UserSchema, TournamentSchema, MatchResultSchema
+from security import hash_password
 from service import Service
 
 router = APIRouter()
 
 
-@router.post("/users", status_code=201, tags=["Users"], summary="Create a new user")
-def create_user(user: UserSchema):
-    user_id = Service.create_user(user.username)
+@router.post("/auth/register")
+def register_user(user: UserSchema):
+    hashed_password = hash_password(user.password)
+    user_id = Service.create_user(user.username, hashed_password)
     return {"user_id": user_id}
+
+
+# @router.post("/users", status_code=201, tags=["Users"], summary="Create a new user")
+# def create_user(user: UserSchema):
+#     user_id = Service.create_user(user.username)
+#     return {"user_id": user_id}
 
 @router.get("/users/{user_id}", tags=["Users"], summary="Get user by id")
 def get_user(user_id: int):
