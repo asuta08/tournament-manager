@@ -12,21 +12,13 @@ class Service:
         return user_id
 
     @staticmethod
-    def get_user(user_id: int) -> int:
+    def get_user(user_id: int) -> Dict[str, Any]:
         user = UserRepository.get_user_by_id(user_id)
-
-        if user is None:
-            raise AuthError("User is not registered!", 401)
-
-        return user_id
+        return {"user_id": user_id, "username": user.username}
 
     @staticmethod
     def get_user_by_username(username: str):
         user = UserRepository.get_user_by_username(username)
-
-        if user is None:
-            raise AuthError("User is not registered!", 401)
-
         return {"user_id": user.id, "hashed_password": user.hashed_password}
 
     @staticmethod

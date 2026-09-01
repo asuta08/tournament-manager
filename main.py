@@ -14,7 +14,7 @@ def tournament_error_handler(request: Request, exc: AppError):
         content={"error": exc.message}
     )
 
-@app.get("/")
+@app.get("/", tags=["System"])
 def root():
     return {"message": "Tournament Manager API", "docs": "/docs"}
 
