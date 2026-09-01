@@ -6,7 +6,7 @@ from security import decode_token
 
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
     token = credentials.credentials
     payload = decode_token(token)
 

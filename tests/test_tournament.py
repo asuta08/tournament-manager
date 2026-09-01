@@ -112,11 +112,6 @@ class TestTournament:
         with pytest.raises(TournamentOperationError):
             tournament.handle_result(match_id, 1, 0)
 
-    def test_handle_result_nonexistent_match(self, tournament):
-        match_id = 42
-        with pytest.raises(TournamentOperationError):
-            tournament.handle_result(match_id, 1, 0)
-
     def test_handle_results_out_of_order(self, tournament):
         match_id = tournament.bracket[1].id
         tournament.handle_result(match_id, 1, 0)

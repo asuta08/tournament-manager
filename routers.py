@@ -13,7 +13,6 @@ router = APIRouter()
 @router.post("/auth/register", status_code=201, tags=["Authentication"])
 def register_user(user: UserAuthSchema):
     hashed_password = hash_password(user.password)
-
     user_data = Service.get_user_by_username(user.username)
 
     if user_data is not None:

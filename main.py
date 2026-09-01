@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from exceptions import TournamentError, AppError
+from exceptions import AppError
 from routers import router
 
 app = FastAPI()

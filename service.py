@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 
 from db.repository import TournamentRepository, MatchRepository, UserRepository
-from exceptions import TournamentRepositoryError, AuthError
+from exceptions import TournamentRepositoryError
 from tournament import Tournament
 
 
@@ -17,7 +17,7 @@ class Service:
         return {"user_id": user_id, "username": user.username}
 
     @staticmethod
-    def get_user_by_username(username: str):
+    def get_user_by_username(username: str) -> Dict[str, Any]:
         user = UserRepository.get_user_by_username(username)
         return {"user_id": user.id, "hashed_password": user.hashed_password}
 
