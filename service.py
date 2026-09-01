@@ -12,13 +12,13 @@ class Service:
         return user_id
 
     @staticmethod
-    def get_user(user_id: int) -> Dict[str, Any]:
+    def get_user(user_id: int) -> int:
         user = UserRepository.get_user_by_id(user_id)
 
         if user is None:
-            raise TournamentRepositoryError("User not found!", 404)
+            raise AuthError("User is not registered!", 401)
 
-        return {"user_id": user_id, "username": user.username}
+        return user_id
 
     @staticmethod
     def get_user_by_username(username: str):
