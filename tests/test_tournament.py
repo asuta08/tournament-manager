@@ -1,7 +1,7 @@
 import pytest
 
-from exceptions import TournamentOperationError
-from tournament import Match, Status, Tournament
+from app.core.exceptions import TournamentOperationError
+from app.core.tournament import Match, Status, Tournament
 
 
 def test_match_status():

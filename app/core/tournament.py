@@ -1,7 +1,7 @@
 from enum import Enum
 from random import shuffle
 from typing import List
-from exceptions import TournamentOperationError
+from app.core.exceptions import TournamentOperationError
 
 
 class Status(Enum):

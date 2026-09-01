@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from dependencies import get_current_user
-from exceptions import AuthError
-from schemas import TournamentSchema, MatchResultSchema, UserAuthSchema
-from security import hash_password, verify_password, create_token
-from service import Service
+from app.api.dependencies import get_current_user
+from app.core.exceptions import AuthError
+from app.schemas import TournamentSchema, MatchResultSchema, UserAuthSchema
+from app.api.security import hash_password, verify_password, create_token
+from app.service import Service
 
 router = APIRouter()
 

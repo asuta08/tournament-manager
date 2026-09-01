@@ -1,8 +1,8 @@
 from typing import List, Dict, Any
 
-from db.repository import TournamentRepository, MatchRepository, UserRepository
-from exceptions import TournamentRepositoryError
-from tournament import Tournament
+from app.db.repository import TournamentRepository, MatchRepository, UserRepository
+from app.core.exceptions import TournamentRepositoryError
+from app.core.tournament import Tournament
 
 
 class Service:
@@ -17,8 +17,11 @@ class Service:
         return {"user_id": user_id, "username": user.username}
 
     @staticmethod
-    def get_user_by_username(username: str) -> Dict[str, Any]:
+    def get_user_by_username(username: str) -> Dict[str, Any] | None:
         user = UserRepository.get_user_by_username(username)
+        if user is None:
+            return None
+
         return {"user_id": user.id, "hashed_password": user.hashed_password}
 
     @staticmethod

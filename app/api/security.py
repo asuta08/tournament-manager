@@ -4,7 +4,7 @@ from typing import Dict, Any
 import jwt
 from passlib.context import CryptContext
 
-from db.config import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
+from app.config import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 
 
 context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")

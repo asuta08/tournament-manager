@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from exceptions import AppError
-from routers import router
+from app.core.exceptions import AppError
+from app.api.routers import router
 
 app = FastAPI()
 

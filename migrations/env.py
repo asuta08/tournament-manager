@@ -5,9 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from db.models import TournamentDB, MatchDB, UserDB
-from db.database import Base
-from db.config import DATABASE_URL
+from app.db.database import Base
+from app.db.config import DATABASE_URL
 
 
 # this is the Alembic Config object, which provides

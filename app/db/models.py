@@ -3,8 +3,8 @@ from typing import List
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.database import Base
-from tournament import Status
+from app.db.database import Base
+from app.core.tournament import Status
 
 
 class UserDB(Base):
