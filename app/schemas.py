@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class UserAuthSchema(BaseModel):
@@ -22,3 +22,9 @@ class TournamentSchema(BaseModel):
 class MatchResultSchema(BaseModel):
     team1_score: int = Field(ge=0)
     team2_score: int = Field(ge=0)
+
+    @model_validator(mode='after')
+    def check_no_draw(self) -> 'MatchResultSchema':
+        if self.team1_score == self.team2_score:
+            raise ValueError("Draws are not allowed!")
+        return self

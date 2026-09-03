@@ -16,7 +16,7 @@ def register_user(user: UserAuthSchema):
     user_data = Service.get_user_by_username(user.username)
 
     if user_data is not None:
-        raise AuthError("User is already registered!", 401)
+        raise AuthError("User is already registered!", 400)
 
     user_id = Service.create_user(user.username, hashed_password)
     return {"user_id": user_id}

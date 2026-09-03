@@ -122,3 +122,8 @@ class TestTournament:
         final = tournament.bracket[2]
         assert final.team1_id is not None
         assert final.team2_id is not None
+
+    def test_handle_result_not_current_round(self, tournament):
+        with pytest.raises(TournamentOperationError):
+            match_id = tournament.bracket[2].id
+            tournament.handle_result(match_id, 1, 0)
