@@ -1,7 +1,6 @@
 from typing import List
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 
 from app.db.database import session_factory
 
@@ -84,17 +83,6 @@ class TournamentRepository:
             return new_tournament.id
 
     @staticmethod
-    def get_tournament_with_matches(tournament_id: int) -> TournamentDB:
-        with session_factory() as session:
-            stmt = (
-                select(TournamentDB)
-                .where(TournamentDB.id == tournament_id)
-                .options(selectinload(TournamentDB.matches))
-            )
-            result = session.scalars(stmt).first()
-            return result
-
-    @staticmethod
     def save_tournament(tournament: Tournament) -> None:
         with session_factory() as session:
             tournament_db = session.get(TournamentDB, tournament.id)
@@ -147,16 +135,3 @@ class MatchRepository:
     def get_match_by_id(match_id: int) -> MatchDB:
         with session_factory() as session:
             return session.get(MatchDB, match_id)
-
-    @staticmethod
-    def get_matches_by_round(tournament_id: int, round_: int) -> List[MatchDB]:
-        with session_factory() as session:
-            stmt = (
-                select(MatchDB)
-                .where(and_(
-                    MatchDB.tournament_id == tournament_id,
-                    MatchDB.round == round_
-                ))
-            )
-            result = session.scalars(stmt).all()
-            return result
