@@ -39,16 +39,20 @@ class UserRepository:
 class TournamentRepository:
 
     @staticmethod
-    def load_tournament(tournament_id: int) -> Tournament:
+    def load_tournament(tournament_id: int) -> Tournament | None:
         with session_factory() as session:
             tournament_db = session.get(TournamentDB, tournament_id)
+            if tournament_db is None:
+                return None
 
             match_map = {}
             teams = set()
 
             for match_db in tournament_db.matches:
-                teams.add(match_db.team1_id)
-                teams.add(match_db.team2_id)
+                if match_db.team1_id is not None:
+                    teams.add(match_db.team1_id)
+                if match_db.team2_id is not None:
+                    teams.add(match_db.team2_id)
                 match = Match(match_db.round, match_db.team1_id, match_db.team2_id)
                 match.id = match_db.id
                 match.team1_score = match_db.team1_score
