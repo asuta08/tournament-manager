@@ -2,7 +2,7 @@ from typing import List
 
 from sqlalchemy import select
 
-from app.db.database import session_factory
+from app.db.database import session_factory, async_session_factory
 
 from app.db.models import UserDB, TournamentDB, MatchDB
 from app.core.tournament import Status, Match, Tournament
@@ -11,28 +11,34 @@ from app.core.tournament import Status, Match, Tournament
 class UserRepository:
 
     @staticmethod
-    def insert_user(username: str, hashed_password: str) -> int:
-        with session_factory() as session:
+    async def insert_user(username: str, hashed_password: str) -> int:
+        async with async_session_factory() as session:
             new_user = UserDB(username=username, hashed_password=hashed_password)
             session.add(new_user)
-            session.commit()
+            await session.commit()
             return new_user.id
 
     @staticmethod
-    def get_user_by_id(user_id: int) -> UserDB:
-        with session_factory() as session:
-            user = session.get(UserDB, user_id)
+    async def get_user_by_id(user_id: int) -> UserDB:
+        async with async_session_factory() as session:
+            stmt = (
+                select(UserDB)
+                .where(UserDB.id == user_id)
+            )
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
             return user
 
     @staticmethod
-    def get_user_by_username(username: str) -> UserDB:
-        with session_factory() as session:
+    async def get_user_by_username(username: str) -> UserDB:
+        async with async_session_factory() as session:
             stmt = (
                 select(UserDB).
                 where(UserDB.username == username)
             )
-            result = session.scalars(stmt).first()
-            return result
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
+            return user
 
 
 class TournamentRepository:
