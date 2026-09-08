@@ -1,4 +1,7 @@
 import pytest
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
@@ -6,7 +9,9 @@ from unittest.mock import patch
 
 from app.db import config
 
-config.DATABASE_URL = "postgresql+psycopg://asuta:t3aBl8*f^ll@localhost:5432/test_db"
+load_dotenv()
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+config.DATABASE_URL = TEST_DATABASE_URL
 
 from app.main import app
 from app.db import database
