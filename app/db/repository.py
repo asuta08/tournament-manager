@@ -1,6 +1,7 @@
 from typing import List
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.db.database import session_factory, async_session_factory
 
@@ -26,7 +27,7 @@ class UserRepository:
                 .where(UserDB.id == user_id)
             )
             result = await session.execute(stmt)
-            user = result.scalar_one_or_none()
+            user = result.scalar()
             return user
 
     @staticmethod
@@ -37,16 +38,24 @@ class UserRepository:
                 where(UserDB.username == username)
             )
             result = await session.execute(stmt)
-            user = result.scalar_one_or_none()
+            user = result.scalar()
             return user
 
 
 class TournamentRepository:
 
     @staticmethod
-    def load_tournament(tournament_id: int) -> Tournament | None:
-        with session_factory() as session:
-            tournament_db = session.get(TournamentDB, tournament_id)
+    async def load_tournament(tournament_id: int) -> Tournament | None:
+        async with async_session_factory() as session:
+            stmt = (
+                select(TournamentDB)
+                .where(TournamentDB.id == tournament_id)
+                .options(selectinload(TournamentDB.matches))
+            )
+
+            result = await session.execute(stmt)
+            tournament_db = result.scalar()
+
             if tournament_db is None:
                 return None
 
@@ -81,25 +90,41 @@ class TournamentRepository:
             return tournament
 
     @staticmethod
-    def insert_tournament(name: str, creator_id: int) -> int:
-        with session_factory() as session:
+    async def insert_tournament(name: str, creator_id: int) -> int:
+        async with async_session_factory() as session:
             new_tournament = TournamentDB(name=name, creator_id=creator_id, status=Status.IN_PROGRESS)
             session.add(new_tournament)
-            session.commit()
+            await session.commit()
             return new_tournament.id
 
     @staticmethod
-    def save_tournament(tournament: Tournament) -> None:
-        with session_factory() as session:
-            tournament_db = session.get(TournamentDB, tournament.id)
+    async def save_tournament(tournament: Tournament) -> None:
+        async with async_session_factory() as session:
+            stmt = (
+                select(TournamentDB)
+                .where(TournamentDB.id == tournament.id)
+                .options(selectinload(TournamentDB.matches))
+            )
+
+            result = await session.execute(stmt)
+            tournament_db = result.scalar()
 
             tournament_db.name = tournament.name
             tournament_db.current_round = tournament.current_round
             tournament_db.status = tournament.status
             tournament_db.winner_id = tournament.winner_id
 
+            match_ids = [match.id for match in tournament.bracket]
+            match_stmt = (
+                select(MatchDB)
+                .where(MatchDB.id.in_(match_ids))
+            )
+            matches_res = await session.execute(match_stmt)
+            matches_db = matches_res.scalars().all()
+            match_map = {match.id: match for match in matches_db}
+
             for match in tournament.bracket:
-                match_db = session.get(MatchDB, match.id)
+                match_db = match_map[match.id]
                 match_db.team1_id = match.team1_id
                 match_db.team2_id = match.team2_id
                 match_db.team1_score = match.team1_score
@@ -107,7 +132,7 @@ class TournamentRepository:
                 match_db.status = match.status
                 match_db.winner_id = match.winner_id
 
-            session.commit()
+            await session.commit()
 
 class MatchRepository:
 
