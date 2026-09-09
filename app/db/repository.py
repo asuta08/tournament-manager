@@ -16,8 +16,10 @@ class UserRepository:
         async with async_session_factory() as session:
             new_user = UserDB(username=username, hashed_password=hashed_password)
             session.add(new_user)
+            await session.flush()
+            user_id = new_user.id
             await session.commit()
-            return new_user.id
+            return user_id
 
     @staticmethod
     async def get_user_by_id(user_id: int) -> UserDB:
@@ -94,8 +96,10 @@ class TournamentRepository:
         async with async_session_factory() as session:
             new_tournament = TournamentDB(name=name, creator_id=creator_id, status=Status.IN_PROGRESS)
             session.add(new_tournament)
+            await session.flush()
+            tournament_id = new_tournament.id
             await session.commit()
-            return new_tournament.id
+            return tournament_id
 
     @staticmethod
     async def save_tournament(tournament: Tournament) -> None:

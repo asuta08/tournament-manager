@@ -11,7 +11,7 @@ engine = create_engine(
 
 async_engine = create_async_engine(
     url=ASYNC_DATABASE_URL,
-    connect_args={"connect_timeout": 5}
+    connect_args={"timeout": 5}
 )
 
 session_factory = sessionmaker(engine)
