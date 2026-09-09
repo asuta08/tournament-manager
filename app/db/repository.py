@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.db.database import session_factory, async_session_factory
+from app.db.database import async_session_factory
 
 from app.db.models import UserDB, TournamentDB, MatchDB
 from app.core.tournament import Status, Match, Tournament
@@ -137,8 +137,8 @@ class TournamentRepository:
 class MatchRepository:
 
     @staticmethod
-    def insert_bracket(tournament_id: int, bracket: List[Match]) -> None:
-        with session_factory() as session:
+    async def insert_bracket(tournament_id: int, bracket: List[Match]) -> None:
+        async with async_session_factory() as session:
 
             compare = {}
             new_matches = []
@@ -153,16 +153,22 @@ class MatchRepository:
                 compare[match] = new_match
                 new_matches.append(new_match)
             session.add_all(new_matches)
-            session.flush()
+            await session.flush()
 
             for match, match_db in compare.items():
                 match.id = match_db.id
                 if match.next_match is not None:
                     match_db.next_match_id = compare[match.next_match].id
 
-            session.commit()
+            await session.commit()
 
     @staticmethod
-    def get_match_by_id(match_id: int) -> MatchDB:
-        with session_factory() as session:
-            return session.get(MatchDB, match_id)
+    async def get_match_by_id(match_id: int) -> MatchDB:
+        async with async_session_factory() as session:
+            stmt = (
+                select(MatchDB)
+                .where(MatchDB.id == match_id)
+            )
+            result = await session.execute(stmt)
+            match = result.scalar()
+            return match
