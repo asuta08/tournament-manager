@@ -11,19 +11,19 @@ router = APIRouter()
 
 
 @router.post("/auth/register", status_code=201, tags=["Authentication"])
-def register_user(user: UserAuthSchema):
+async def register_user(user: UserAuthSchema):
     hashed_password = hash_password(user.password)
-    user_data = Service.get_user_by_username(user.username)
+    user_data = await Service.get_user_by_username(user.username)
 
     if user_data is not None:
         raise AuthError("User is already registered!", 400)
 
-    user_id = Service.create_user(user.username, hashed_password)
+    user_id = await Service.create_user(user.username, hashed_password)
     return {"user_id": user_id}
 
 @router.post("/auth/login", tags=["Authentication"])
-def login_user(user: UserAuthSchema):
-    user_data = Service.get_user_by_username(user.username)
+async def login_user(user: UserAuthSchema):
+    user_data = await Service.get_user_by_username(user.username)
 
     if user_data is None:
         raise AuthError("User is not registered!", 401)
@@ -35,34 +35,35 @@ def login_user(user: UserAuthSchema):
 
 
 @router.get("/users/me", tags=["Users"], summary="Get yourself")
-def get_me(user_id: int = Depends(get_current_user)):
-    return Service.get_user(user_id)
+async def get_me(user_id: int = Depends(get_current_user)):
+    return await Service.get_user(user_id)
 
 
 @router.post("/tournaments", status_code=201, tags=["Tournaments"], summary="Create a new tournament")
-def create_tournament(tournament: TournamentSchema, user_id: int = Depends(get_current_user)):
-    tournament_id = Service.create_tournament(user_id, tournament.name, tournament.teams)
+async def create_tournament(tournament: TournamentSchema, user_id: int = Depends(get_current_user)):
+    tournament_id = await Service.create_tournament(user_id, tournament.name, tournament.teams)
     return {"tournament_id": tournament_id}
 
 @router.get("/tournaments/{tournament_id}", tags=["Tournaments"], summary="Get tournament by id")
-def get_tournament(tournament_id: int, _: None = Depends(get_current_user)):
-    return Service.get_tournament(tournament_id)
+async def get_tournament(tournament_id: int, _: None = Depends(get_current_user)):
+    return await Service.get_tournament(tournament_id)
 
 @router.get("/tournaments/{tournament_id}/bracket", tags=["Tournaments"], summary="Get tournament bracket by id")
-def get_tournament_bracket(tournament_id: int, _: None = Depends(get_current_user)):
-    return Service.get_bracket(tournament_id)
+async def get_tournament_bracket(tournament_id: int, _: None = Depends(get_current_user)):
+    return await Service.get_bracket(tournament_id)
 
 @router.get("/tournaments/{tournament_id}/winner", tags=["Tournaments"], summary="Get tournament winner")
-def get_winner(tournament_id: int, _: None = Depends(get_current_user)):
-    winner_id = Service.get_tournament(tournament_id)["winner_id"]
+async def get_winner(tournament_id: int, _: None = Depends(get_current_user)):
+    tournament = await Service.get_tournament(tournament_id)
+    winner_id = tournament["winner_id"]
     return {"winner_id": winner_id}
 
 
 @router.get("/matches/{match_id}", tags=["Matches"], summary="Get match by id")
-def get_match(match_id: int, _: None = Depends(get_current_user)):
-    return Service.get_match(match_id)
+async def get_match(match_id: int, _: None = Depends(get_current_user)):
+    return await Service.get_match(match_id)
 
 @router.patch("/matches/{match_id}/result", tags=["Matches"], summary="Add a match result")
-def apply_result(match_id: int, result: MatchResultSchema, _: None = Depends(get_current_user)):
-    Service.handle_match_result(match_id, result.team1_score, result.team2_score)
+async def apply_result(match_id: int, result: MatchResultSchema, _: None = Depends(get_current_user)):
+    await Service.handle_match_result(match_id, result.team1_score, result.team2_score)
     return {"success": True}

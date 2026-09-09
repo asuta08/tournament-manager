@@ -7,37 +7,36 @@ from app.core.tournament import Tournament
 
 class Service:
     @staticmethod
-    def create_user(username: str, hashed_password: str) -> int:
-        user_id = UserRepository.insert_user(username, hashed_password)
+    async def create_user(username: str, hashed_password: str) -> int:
+        user_id = await UserRepository.insert_user(username, hashed_password)
         return user_id
 
     @staticmethod
-    def get_user(user_id: int) -> Dict[str, Any]:
-        user = UserRepository.get_user_by_id(user_id)
+    async def get_user(user_id: int) -> Dict[str, Any]:
+        user = await UserRepository.get_user_by_id(user_id)
         return {"user_id": user_id, "username": user.username}
 
     @staticmethod
-    def get_user_by_username(username: str) -> Dict[str, Any] | None:
-        user = UserRepository.get_user_by_username(username)
+    async def get_user_by_username(username: str) -> Dict[str, Any] | None:
+        user = await UserRepository.get_user_by_username(username)
         if user is None:
             return None
-
         return {"user_id": user.id, "hashed_password": user.hashed_password}
 
     @staticmethod
-    def create_tournament(user_id: int, name: str, teams: List[int]) -> int:
+    async def create_tournament(user_id: int, name: str, teams: List[int]) -> int:
         tournament = Tournament(name, teams)
         tournament.create_bracket()
 
-        tournament_id = TournamentRepository.insert_tournament(name, user_id)
+        tournament_id = await TournamentRepository.insert_tournament(name, user_id)
         tournament.id = tournament_id
-        MatchRepository.insert_bracket(tournament_id, tournament.bracket)
+        await MatchRepository.insert_bracket(tournament_id, tournament.bracket)
 
         return tournament_id
 
     @staticmethod
-    def get_tournament(tournament_id: int) -> Dict[str, Any]:
-        tournament = TournamentRepository.load_tournament(tournament_id)
+    async def get_tournament(tournament_id: int) -> Dict[str, Any]:
+        tournament = await TournamentRepository.load_tournament(tournament_id)
 
         if tournament is None:
             raise TournamentRepositoryError("Tournament not found!", 404)
@@ -51,21 +50,21 @@ class Service:
         }
 
     @staticmethod
-    def handle_match_result(match_id: int, team1_score: int, team2_score: int) -> None:
-        match_db = MatchRepository.get_match_by_id(match_id)
+    async def handle_match_result(match_id: int, team1_score: int, team2_score: int) -> None:
+        match_db = await MatchRepository.get_match_by_id(match_id)
 
         if match_db is None:
             raise TournamentRepositoryError("Match not found!", 404)
 
-        tournament = TournamentRepository.load_tournament(match_db.tournament_id)
+        tournament = await TournamentRepository.load_tournament(match_db.tournament_id)
 
         tournament.handle_result(match_id, team1_score, team2_score)
 
-        TournamentRepository.save_tournament(tournament)
+        await TournamentRepository.save_tournament(tournament)
 
     @staticmethod
-    def get_bracket(tournament_id: int) -> Dict[str, List[Dict[str, Any]]]:
-        tournament = TournamentRepository.load_tournament(tournament_id)
+    async def get_bracket(tournament_id: int) -> Dict[str, List[Dict[str, Any]]]:
+        tournament = await TournamentRepository.load_tournament(tournament_id)
 
         if tournament is None:
             raise TournamentRepositoryError("Tournament not found!", 404)
@@ -96,8 +95,8 @@ class Service:
         return bracket
 
     @staticmethod
-    def get_match(match_id: int) -> Dict[str, Any]:
-        match_db = MatchRepository.get_match_by_id(match_id)
+    async def get_match(match_id: int) -> Dict[str, Any]:
+        match_db = await MatchRepository.get_match_by_id(match_id)
 
         if match_db is None:
             raise TournamentRepositoryError("Match not found!", 404)
