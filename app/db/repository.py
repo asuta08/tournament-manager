@@ -1,8 +1,9 @@
 from typing import List
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-from app.db.database import session_factory
+from app.db.database import async_session_factory
 
 from app.db.models import UserDB, TournamentDB, MatchDB
 from app.core.tournament import Status, Match, Tournament
@@ -11,36 +12,52 @@ from app.core.tournament import Status, Match, Tournament
 class UserRepository:
 
     @staticmethod
-    def insert_user(username: str, hashed_password: str) -> int:
-        with session_factory() as session:
+    async def insert_user(username: str, hashed_password: str) -> int:
+        async with async_session_factory() as session:
             new_user = UserDB(username=username, hashed_password=hashed_password)
             session.add(new_user)
-            session.commit()
-            return new_user.id
+            await session.flush()
+            user_id = new_user.id
+            await session.commit()
+            return user_id
 
     @staticmethod
-    def get_user_by_id(user_id: int) -> UserDB:
-        with session_factory() as session:
-            user = session.get(UserDB, user_id)
+    async def get_user_by_id(user_id: int) -> UserDB:
+        async with async_session_factory() as session:
+            stmt = (
+                select(UserDB)
+                .where(UserDB.id == user_id)
+            )
+            result = await session.execute(stmt)
+            user = result.scalar()
             return user
 
     @staticmethod
-    def get_user_by_username(username: str) -> UserDB:
-        with session_factory() as session:
+    async def get_user_by_username(username: str) -> UserDB:
+        async with async_session_factory() as session:
             stmt = (
                 select(UserDB).
                 where(UserDB.username == username)
             )
-            result = session.scalars(stmt).first()
-            return result
+            result = await session.execute(stmt)
+            user = result.scalar()
+            return user
 
 
 class TournamentRepository:
 
     @staticmethod
-    def load_tournament(tournament_id: int) -> Tournament | None:
-        with session_factory() as session:
-            tournament_db = session.get(TournamentDB, tournament_id)
+    async def load_tournament(tournament_id: int) -> Tournament | None:
+        async with async_session_factory() as session:
+            stmt = (
+                select(TournamentDB)
+                .where(TournamentDB.id == tournament_id)
+                .options(selectinload(TournamentDB.matches))
+            )
+
+            result = await session.execute(stmt)
+            tournament_db = result.scalar()
+
             if tournament_db is None:
                 return None
 
@@ -75,25 +92,43 @@ class TournamentRepository:
             return tournament
 
     @staticmethod
-    def insert_tournament(name: str, creator_id: int) -> int:
-        with session_factory() as session:
+    async def insert_tournament(name: str, creator_id: int) -> int:
+        async with async_session_factory() as session:
             new_tournament = TournamentDB(name=name, creator_id=creator_id, status=Status.IN_PROGRESS)
             session.add(new_tournament)
-            session.commit()
-            return new_tournament.id
+            await session.flush()
+            tournament_id = new_tournament.id
+            await session.commit()
+            return tournament_id
 
     @staticmethod
-    def save_tournament(tournament: Tournament) -> None:
-        with session_factory() as session:
-            tournament_db = session.get(TournamentDB, tournament.id)
+    async def save_tournament(tournament: Tournament) -> None:
+        async with async_session_factory() as session:
+            stmt = (
+                select(TournamentDB)
+                .where(TournamentDB.id == tournament.id)
+                .options(selectinload(TournamentDB.matches))
+            )
+
+            result = await session.execute(stmt)
+            tournament_db = result.scalar()
 
             tournament_db.name = tournament.name
             tournament_db.current_round = tournament.current_round
             tournament_db.status = tournament.status
             tournament_db.winner_id = tournament.winner_id
 
+            match_ids = [match.id for match in tournament.bracket]
+            match_stmt = (
+                select(MatchDB)
+                .where(MatchDB.id.in_(match_ids))
+            )
+            matches_res = await session.execute(match_stmt)
+            matches_db = matches_res.scalars().all()
+            match_map = {match.id: match for match in matches_db}
+
             for match in tournament.bracket:
-                match_db = session.get(MatchDB, match.id)
+                match_db = match_map[match.id]
                 match_db.team1_id = match.team1_id
                 match_db.team2_id = match.team2_id
                 match_db.team1_score = match.team1_score
@@ -101,13 +136,13 @@ class TournamentRepository:
                 match_db.status = match.status
                 match_db.winner_id = match.winner_id
 
-            session.commit()
+            await session.commit()
 
 class MatchRepository:
 
     @staticmethod
-    def insert_bracket(tournament_id: int, bracket: List[Match]) -> None:
-        with session_factory() as session:
+    async def insert_bracket(tournament_id: int, bracket: List[Match]) -> None:
+        async with async_session_factory() as session:
 
             compare = {}
             new_matches = []
@@ -122,16 +157,22 @@ class MatchRepository:
                 compare[match] = new_match
                 new_matches.append(new_match)
             session.add_all(new_matches)
-            session.flush()
+            await session.flush()
 
             for match, match_db in compare.items():
                 match.id = match_db.id
                 if match.next_match is not None:
                     match_db.next_match_id = compare[match.next_match].id
 
-            session.commit()
+            await session.commit()
 
     @staticmethod
-    def get_match_by_id(match_id: int) -> MatchDB:
-        with session_factory() as session:
-            return session.get(MatchDB, match_id)
+    async def get_match_by_id(match_id: int) -> MatchDB:
+        async with async_session_factory() as session:
+            stmt = (
+                select(MatchDB)
+                .where(MatchDB.id == match_id)
+            )
+            result = await session.execute(stmt)
+            match = result.scalar()
+            return match

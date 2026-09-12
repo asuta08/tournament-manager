@@ -12,7 +12,7 @@ Backend-приложение для создания и проведения т�
 
 ## Стек технологий
 
-- Python 3.13, FastAPI, SQLAlchemy, Pydantic, alembic
+- Python 3.13, FastAPI, SQLAlchemy (async), Pydantic, alembic
 - PostgreSQL
 - PyJWT (аутентификация)
 - Docker / Docker Compose
@@ -47,5 +47,4 @@ API будет доступна по адресу http://localhost:8000
 ## Планы по развитию
 
 - Автоматическое создание тестовой БД
-- Переход на асинхронность
 - Логирование запросов

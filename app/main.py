@@ -1,9 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.core.exceptions import AppError
 from app.api.routers import router
+from app.db.database import async_engine
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await async_engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router)
 

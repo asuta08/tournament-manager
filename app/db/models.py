@@ -16,7 +16,8 @@ class UserDB(Base):
 
     tournaments: Mapped[List["TournamentDB"]] = relationship(
         "TournamentDB",
-        back_populates="creator"
+        back_populates="creator",
+        lazy="selectin"
     )
 
 
@@ -32,12 +33,14 @@ class TournamentDB(Base):
 
     creator: Mapped["UserDB"] = relationship(
         "UserDB",
-        back_populates="tournaments"
+        back_populates="tournaments",
+        lazy="joined"
     )
 
     matches: Mapped[List["MatchDB"]] = relationship(
         "MatchDB",
-        back_populates="tournament"
+        back_populates="tournament",
+        lazy="selectin"
     )
 
 
@@ -57,5 +60,6 @@ class MatchDB(Base):
 
     tournament: Mapped["TournamentDB"] = relationship(
         "TournamentDB",
-        back_populates="matches"
+        back_populates="matches",
+        lazy="joined"
     )
