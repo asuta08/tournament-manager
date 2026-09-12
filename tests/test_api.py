@@ -2,34 +2,33 @@ import pytest
 
 from app.core.tournament import Status
 from app.db.repository import UserRepository, TournamentRepository, MatchRepository
-from tests.conftest import client, auth_token
 
 
-def test_register(client):
-    response = client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+async def test_register(client):
+    response = await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
 
     assert response.status_code == 201
     assert response.json()["user_id"] == 1
 
-    user = UserRepository.get_user_by_id(1)
+    user = await UserRepository.get_user_by_id(1)
 
     assert user.username == "Test User"
     assert user.hashed_password != "test_password"
 
-def test_already_registered(client):
+async def test_already_registered(client):
 
-    client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+    await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
 
-    response = client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+    response = await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
 
     assert response.status_code == 400
     assert response.json()["error"] == "User is already registered!"
 
-def test_login(client):
+async def test_login(client):
 
-    client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+    await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
 
-    response = client.post("/auth/login", json={"username": "Test User", "password": "test_password"})
+    response = await client.post("/auth/login", json={"username": "Test User", "password": "test_password"})
 
     assert response.status_code == 200
     assert isinstance(response.json()["access_token"], str)
@@ -42,29 +41,29 @@ def test_login(client):
         ("Wrong User", "test_password")
     ]
 )
-def test_invalid_login(client, username, password):
-    client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+async def test_invalid_login(client, username, password):
+    await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
 
-    response = client.post("/auth/login", json={"username": username, "password": password})
+    response = await client.post("/auth/login", json={"username": username, "password": password})
 
     assert response.status_code == 401
     assert response.json()["error"] in ["Invalid password!", "User is not registered!"]
 
-def test_get_me(client, auth_token):
-    response = client.get("/users/me", headers={"Authorization": f"Bearer {auth_token}"})
+async def test_get_me(client, auth_token):
+    response = await client.get("/users/me", headers={"Authorization": f"Bearer {auth_token}"})
 
     assert response.status_code == 200
     assert response.json()["user_id"] == 1
     assert response.json()["username"] == "Test User"
 
-def test_action_without_token(client):
-    response = client.post("/tournaments", json={"name": "Test Tournament", "teams": [1, 2, 3, 4]})
+async def test_action_without_token(client):
+    response = await client.post("/tournaments", json={"name": "Test Tournament", "teams": [1, 2, 3, 4]})
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
 
-def test_create_tournament(client, auth_token):
-    response = client.post(
+async def test_create_tournament(client, auth_token):
+    response = await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -73,7 +72,7 @@ def test_create_tournament(client, auth_token):
     assert response.status_code == 201
     assert response.json()["tournament_id"] == 1
 
-    tournament_db = TournamentRepository.load_tournament(1)
+    tournament_db = await TournamentRepository.load_tournament(1)
 
     assert tournament_db.name == "Test Tournament"
     assert tournament_db.teams == [1, 2, 3, 4]
@@ -89,22 +88,22 @@ def test_create_tournament(client, auth_token):
         (123, [1, 2])
     ]
 )
-def test_create_tournament_invalid_data(client, auth_token, name, teams):
-    response = client.post(
+async def test_create_tournament_invalid_data(client, auth_token, name, teams):
+    response = await client.post(
         "/tournaments",
         json={"name": name, "teams": teams},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
     assert response.status_code == 422
 
-def test_get_tournament(client, auth_token):
-    client.post(
+async def test_get_tournament(client, auth_token):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.get(
+    response = await client.get(
         "/tournaments/1",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -117,8 +116,8 @@ def test_get_tournament(client, auth_token):
     assert data["status"] == "in_progress"
     assert data["winner_id"] is None
 
-def test_get_tournament_not_found(client, auth_token):
-    response = client.get(
+async def test_get_tournament_not_found(client, auth_token):
+    response = await client.get(
         "/tournaments/42",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -126,14 +125,14 @@ def test_get_tournament_not_found(client, auth_token):
     assert response.status_code == 404
     assert response.json()["error"] == "Tournament not found!"
 
-def test_get_winner_active_tournament(client, auth_token):
-    client.post(
+async def test_get_winner_active_tournament(client, auth_token):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.get(
+    response = await client.get(
         "/tournaments/1/winner",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -141,20 +140,20 @@ def test_get_winner_active_tournament(client, auth_token):
     assert response.status_code == 200
     assert response.json()["winner_id"] is None
 
-def test_get_winner(client, auth_token):
-    client.post(
+async def test_get_winner(client, auth_token):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    client.patch(
+    await client.patch(
         "/matches/1/result",
         json={"team1_score": 1, "team2_score": 0},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.get(
+    response = await client.get(
         "/tournaments/1/winner",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -162,14 +161,14 @@ def test_get_winner(client, auth_token):
     assert response.status_code == 200
     assert response.json()["winner_id"] is not None
 
-def test_get_match(client, auth_token):
-    client.post(
+async def test_get_match(client, auth_token):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.get(
+    response = await client.get(
         "/matches/1",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -184,8 +183,8 @@ def test_get_match(client, auth_token):
     assert data["status"] == "in_progress"
     assert data["winner_id"] is None
 
-def test_get_match_not_found(client, auth_token):
-    response = client.get(
+async def test_get_match_not_found(client, auth_token):
+    response = await client.get(
         "/matches/42",
         headers={"Authorization": f"Bearer {auth_token}"}
     )
@@ -193,14 +192,14 @@ def test_get_match_not_found(client, auth_token):
     assert response.status_code == 404
     assert response.json()["error"] == "Match not found!"
 
-def test_apply_result(client, auth_token):
-    client.post(
+async def test_apply_result(client, auth_token):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.patch(
+    response = await client.patch(
         "/matches/1/result",
         json={"team1_score": 1, "team2_score": 0},
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -209,14 +208,14 @@ def test_apply_result(client, auth_token):
     assert response.status_code == 200
     assert response.json()["success"]
 
-    match_db = MatchRepository.get_match_by_id(1)
+    match_db = await MatchRepository.get_match_by_id(1)
 
     assert match_db.team1_score == 1
     assert match_db.team2_score == 0
     assert match_db.status == Status.FINISHED
     assert match_db.winner_id == match_db.team1_id
 
-    next_match = MatchRepository.get_match_by_id(match_db.next_match_id)
+    next_match = await MatchRepository.get_match_by_id(match_db.next_match_id)
 
     assert next_match.team1_id == match_db.winner_id or next_match.team2_id == match_db.winner_id
 
@@ -232,14 +231,14 @@ def test_apply_result(client, auth_token):
         (-3, 0, 1, 404),
     ]
 )
-def test_apply_result_invalid_data(client, auth_token, match_id, team1_score, team2_score, status_code):
-    client.post(
+async def test_apply_result_invalid_data(client, auth_token, match_id, team1_score, team2_score, status_code):
+    await client.post(
         "/tournaments",
         json={"name": "Test Tournament", "teams": [1, 2, 3, 4]},
         headers={"Authorization": f"Bearer {auth_token}"}
     )
 
-    response = client.patch(
+    response = await client.patch(
         f"/matches/{match_id}/result",
         json={"team1_score": team1_score, "team2_score": team2_score},
         headers={"Authorization": f"Bearer {auth_token}"}

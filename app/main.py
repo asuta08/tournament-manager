@@ -9,7 +9,6 @@ from app.db.database import async_engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await async_engine.connect()
     yield
     await async_engine.dispose()
 

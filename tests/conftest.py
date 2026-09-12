@@ -1,47 +1,55 @@
-import pytest
 import os
 
+import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import create_engine, text, NullPool
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from unittest.mock import patch
 
 from app.db import config
 
 load_dotenv()
-TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
-config.DATABASE_URL = TEST_DATABASE_URL
+TEST_ASYNC_DATABASE_URL = os.getenv("TEST_ASYNC_DATABASE_URL")
+TEST_SYNC_DATABASE_URL = os.getenv("TEST_SYNC_DATABASE_URL")
+config.ASYNC_DATABASE_URL = TEST_ASYNC_DATABASE_URL
+
 
 from app.main import app
-from app.db import database
 from app.db.models import Base
 
-test_engine = create_engine(config.DATABASE_URL)
-TestingSessionLocal = sessionmaker(test_engine)
+sync_engine = create_engine(TEST_SYNC_DATABASE_URL)
+test_engine = create_async_engine(config.ASYNC_DATABASE_URL, poolclass=NullPool)
+TestingSessionLocal = async_sessionmaker(test_engine)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    Base.metadata.create_all(test_engine)
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def setup_database():
+    Base.metadata.create_all(sync_engine)
     yield
-    Base.metadata.drop_all(test_engine)
+    Base.metadata.drop_all(sync_engine)
 
-@pytest.fixture(scope="function")
-def client(setup_database):
-    with patch('app.db.database.engine', test_engine):
-        with patch('app.db.database.session_factory', TestingSessionLocal):
-            yield TestClient(app)
+@pytest_asyncio.fixture(scope="function")
+async def client(setup_database):
+    with patch('app.db.database.async_engine', test_engine), \
+        patch('app.main.async_engine', test_engine), \
+        patch('app.db.database.async_session_factory', TestingSessionLocal), \
+        patch('app.db.repository.async_session_factory', TestingSessionLocal):
 
-            with test_engine.connect() as conn:
-                for table in reversed(Base.metadata.sorted_tables):
-                    conn.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
-                conn.commit()
+        async with LifespanManager(app):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as async_client:
+                yield async_client
 
-@pytest.fixture
-def auth_token(client):
-    client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+        async with test_engine.begin() as conn:
+            for table in reversed(Base.metadata.sorted_tables):
+                await conn.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
 
-    response = client.post("/auth/login", json={"username": "Test User", "password": "test_password"})
+@pytest_asyncio.fixture
+async def auth_token(client):
+    await client.post("/auth/register", json={"username": "Test User", "password": "test_password"})
+
+    response = await client.post("/auth/login", json={"username": "Test User", "password": "test_password"})
 
     return response.json()["access_token"]
